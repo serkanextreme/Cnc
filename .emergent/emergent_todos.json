@@ -1,26 +1,18 @@
 [
   {
-    "content": "Phase 4: Chatter-free / HEM teknolojisi araştırması (RCTF, ae %5-15, diş geçiş frekansı, chatter lobları) — web kaynaklarıyla doğrulandı",
+    "content": "Phase 5: Trokoidal kanal hesabı (paso sayısı, kat sayısı, takım yolu, süre, hacim) — motor + POC 16/16",
     "status": "completed"
   },
   {
-    "content": "Phase 4: Hesap motoru (backend + frontend) + /api/calc/chatter-free",
+    "content": "Phase 5: Chatter-Free ekranına 'Trokoidal Kanal' bölümü",
     "status": "completed"
   },
   {
-    "content": "Phase 4: test_core3.py POC — 55/55 test geçti (telafi kimliği hm = hedef fz dahil)",
+    "content": "Phase 5: Mikrofonla titreşim dinleme (Web Audio FFT) + tespit edilen frekansı kararlı devir önerisine bağlama",
     "status": "completed"
   },
   {
-    "content": "Phase 4: /chatter-free ekranı (helis boyu=dalma, ae presetleri, kazanç kartı, titreşim kartı)",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 4: Ana ekran kartı, geçmiş kaydı/filtresi, sertlik+ömür+limit kartları entegrasyonu",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 4: testing_agent_v3 testi (backend 25/25) + 'yeniden aç' rota hatası düzeltildi",
+    "content": "Phase 5: testing_agent_v3 testi — 21/21 geçti, hata yok",
     "status": "completed"
   }
 ]
