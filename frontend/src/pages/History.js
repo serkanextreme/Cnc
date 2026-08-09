@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  Bolt,
   CircleDotDashed,
   Drill,
   History as HistoryIcon,
@@ -24,12 +25,13 @@ import {
 import { buildShareText, describeRecord, groupByDay, shareText, todayStats } from '../lib/records';
 import { formatNumber, formatQty, unitLabel } from '../lib/units';
 
-const OP_ICONS = { freze: CircleDotDashed, torna: RotateCw, matkap: Drill };
+const OP_ICONS = { freze: CircleDotDashed, torna: RotateCw, matkap: Drill, dis: Bolt };
 const OP_FILTERS = [
   { id: 'all', label: 'Tümü' },
   { id: 'freze', label: 'Freze' },
   { id: 'torna', label: 'Torna' },
   { id: 'matkap', label: 'Matkap' },
+  { id: 'dis', label: 'Kılavuz / Diş' },
 ];
 
 export default function HistoryPage() {
@@ -78,7 +80,7 @@ export default function HistoryPage() {
             <p className="pb-0.5 text-right text-xs leading-5 text-muted-foreground">
               {stats.counts.freze} Freze · {stats.counts.torna} Torna
               <br />
-              {stats.counts.matkap} Matkap
+              {stats.counts.matkap} Matkap · {stats.counts.dis} Diş
             </p>
           </div>
         </section>

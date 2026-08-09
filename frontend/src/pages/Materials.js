@@ -22,9 +22,11 @@ import {
 import { useApp } from '../context/AppContext';
 import {
   GROUPS,
+  ISO_GROUPS,
   MACHINABILITY,
   machinabilityLabel,
   machinabilityTone,
+  matchesQuery,
   recommended,
 } from '../data/materials';
 import {
@@ -72,24 +74,23 @@ export default function Materials() {
   const [hardness, setHardness] = useState('all');
   const [mach, setMach] = useState('all');
   const [openGroup, setOpenGroup] = useState(null);
+  const [iso, setIso] = useState('all');
+  const [limit, setLimit] = useState(40);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('tr');
     return materials.filter((m) => {
       if (group !== 'all' && m.group !== group) return false;
+      if (iso !== 'all' && m.isoGroup !== iso) return false;
       if (mach !== 'all' && m.machinability !== mach) return false;
       if (!matchHardness(m, hardness)) return false;
       if (!needle) return true;
       if (searchMode === 'code') return m.code.toLocaleLowerCase('tr').includes(needle);
-      return (
-        m.code.toLocaleLowerCase('tr').includes(needle) ||
-        m.name.toLocaleLowerCase('tr').includes(needle) ||
-        (m.subtitle || '').toLocaleLowerCase('tr').includes(needle)
-      );
+      return matchesQuery(m, needle);
     });
-  }, [materials, query, searchMode, group, hardness, mach]);
+  }, [materials, query, searchMode, group, hardness, mach, iso]);
 
-  const filtersActive = query.trim() !== '' || group !== 'all' || hardness !== 'all' || mach !== 'all';
+  const filtersActive = query.trim() !== '' || group !== 'all' || hardness !== 'all' || mach !== 'all' || iso !== 'all';
   const favMaterials = materials.filter((m) => favorites.includes(m.id));
   const customMats = materials.filter((m) => m.custom);
 
@@ -126,6 +127,9 @@ export default function Materials() {
               </div>
               <p className="mt-1 truncate text-sm font-semibold text-card-foreground">
                 {m.name} {m.subtitle ? <span className="font-normal text-muted-foreground">· {m.subtitle}</span> : null}
+              </p>
+              <p className="mt-1 truncate text-[11px] text-accent">
+                {(m.standards || []).slice(0, 4).join(' · ')}
               </p>
               <p className="mt-1 truncate text-xs text-muted-foreground">
                 {hardnessText(m)}
@@ -198,6 +202,22 @@ export default function Materials() {
         </div>
 
         <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto pb-1">
+          {[{ id: 'all', label: 'ISO grubu' }, ...ISO_GROUPS.map((g) => ({ id: g.id, label: g.label }))].map((g) => (
+            <button
+              key={g.id}
+              type="button"
+              onClick={() => setIso(g.id)}
+              data-testid={`filter-iso-${g.id}`}
+              className={`shrink-0 rounded-theme border px-3 py-2 text-xs font-semibold transition-colors ${
+                iso === g.id ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-card-foreground'
+              }`}
+            >
+              {g.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto pb-1">
           {HARDNESS_FILTERS.map((h) => (
             <button
               key={h.id}
@@ -265,7 +285,7 @@ export default function Materials() {
         {filtersActive ? (
           <section className="mt-6" aria-label="Arama sonuçları">
             <SectionHeading
-              eyebrow="SONUÇLAR"
+              eyebrow={`SONUÇLAR · ${filtered.length} MALZEME`}
               title="Filtreli liste"
               right={
                 <button
@@ -275,6 +295,7 @@ export default function Materials() {
                     setGroup('all');
                     setHardness('all');
                     setMach('all');
+                    setIso('all');
                   }}
                   data-testid="clear-filters"
                   className="text-xs font-semibold text-primary"
@@ -291,9 +312,21 @@ export default function Materials() {
                 testId="materials-empty"
               />
             ) : (
-              <div className="overflow-hidden rounded-theme border border-border bg-card divide-y divide-border" data-testid="filtered-list">
-                {filtered.map(renderMaterialRow)}
-              </div>
+              <>
+                <div className="overflow-hidden rounded-theme border border-border bg-card divide-y divide-border" data-testid="filtered-list">
+                  {filtered.slice(0, limit).map(renderMaterialRow)}
+                </div>
+                {filtered.length > limit ? (
+                  <button
+                    type="button"
+                    onClick={() => setLimit((l) => l + 40)}
+                    data-testid="load-more"
+                    className="mx-auto mt-3 block rounded-theme border border-border bg-card px-4 py-2.5 text-xs font-semibold text-primary"
+                  >
+                    {filtered.length - limit} malzeme daha göster
+                  </button>
+                ) : null}
+              </>
             )}
           </section>
         ) : (
@@ -329,7 +362,7 @@ export default function Materials() {
               <SectionHeading
                 eyebrow="TÜM MALZEMELER"
                 title="Kütüphane"
-                right={<span className="text-xs text-muted-foreground">{materials.length} malzeme</span>}
+                right={<span className="text-xs text-muted-foreground">{materials.length} kalite</span>}
               />
               <ListCard testId="group-list">
                 {GROUPS.map((g) => {

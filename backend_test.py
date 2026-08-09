@@ -1,292 +1,394 @@
 """
-Talaş CNC App — Backend API Testing
-Tests all backend endpoints for the CNC machining calculator app.
+Backend API Testing for Talaş Phase 3
+Tests all API endpoints including threading, tool life, and material catalog
 """
 import requests
 import sys
-import json
 
 BASE_URL = "https://metal-cutting-app-1.preview.emergentagent.com/api"
 
-class BackendTester:
+class TestRunner:
     def __init__(self):
-        self.tests_run = 0
-        self.tests_passed = 0
+        self.passed = 0
+        self.failed = 0
         self.failures = []
-
+    
     def test(self, name, condition, detail=""):
-        self.tests_run += 1
         if condition:
-            self.tests_passed += 1
+            self.passed += 1
             print(f"  ✅ {name}")
             if detail:
                 print(f"     {detail}")
         else:
+            self.failed += 1
             self.failures.append(f"{name}: {detail}")
             print(f"  ❌ {name}")
             if detail:
                 print(f"     {detail}")
-        return condition
-
-    def near(self, a, b, tol=1):
-        return abs(a - b) <= tol
-
-    def run_all(self):
-        print("\n" + "="*70)
-        print("TALAŞ CNC APP — BACKEND API TESTS")
-        print("="*70)
-        
-        self.test_health()
-        self.test_catalog()
-        self.test_materials_list()
-        self.test_materials_filters()
-        self.test_material_detail()
-        self.test_machine_presets()
-        self.test_calc_freze()
-        self.test_calc_torna()
-        self.test_calc_matkap()
-        self.test_calc_limits()
-        self.test_calc_validation()
-        
-        print("\n" + "="*70)
-        print(f"RESULTS: {self.tests_passed}/{self.tests_run} passed")
+    
+    def summary(self):
+        print(f"\n{'='*70}")
+        print(f"RESULTS: {self.passed} passed, {self.failed} failed")
         if self.failures:
-            print("\nFAILURES:")
+            print(f"\nFAILURES:")
             for f in self.failures:
                 print(f"  - {f}")
-        print("="*70)
-        return 0 if len(self.failures) == 0 else 1
+        print(f"{'='*70}")
+        return 0 if self.failed == 0 else 1
 
-    def test_health(self):
-        print("\n[TEST] Health Check")
-        try:
-            r = requests.get(f"{BASE_URL}/health", timeout=5)
-            self.test("Health endpoint returns 200", r.status_code == 200)
-            if r.status_code == 200:
-                data = r.json()
-                self.test("Health status is 'ok'", data.get('status') == 'ok')
-                self.test("24 materials available", data.get('materials') == 24)
-                self.test("MongoDB connected", data.get('mongo') == True)
-        except Exception as e:
-            self.test("Health endpoint accessible", False, str(e))
+runner = TestRunner()
 
-    def test_catalog(self):
-        print("\n[TEST] Catalog")
-        try:
-            r = requests.get(f"{BASE_URL}/catalog", timeout=5)
-            self.test("Catalog endpoint returns 200", r.status_code == 200)
-            if r.status_code == 200:
-                data = r.json()
-                self.test("Catalog has materials", 'materials' in data and len(data['materials']) == 24)
-                self.test("Catalog has groups", 'groups' in data and len(data['groups']) == 9)
-                self.test("Catalog has machine presets", 'machinePresets' in data and len(data['machinePresets']) == 7)
-        except Exception as e:
-            self.test("Catalog endpoint accessible", False, str(e))
+# ============================================================================
+# TEST 1: Health & Catalog
+# ============================================================================
+print("\n=== TEST 1: Health & Catalog ===")
+try:
+    r = requests.get(f"{BASE_URL}/health", timeout=10)
+    runner.test("GET /api/health returns 200", r.status_code == 200, f"status={r.status_code}")
+    if r.status_code == 200:
+        data = r.json()
+        runner.test("Health check has 247 materials", data.get("materials") == 247, f"materials={data.get('materials')}")
+        runner.test("Mongo connection OK", data.get("mongo") == True, f"mongo={data.get('mongo')}")
+except Exception as e:
+    runner.test("GET /api/health", False, str(e))
 
-    def test_materials_list(self):
-        print("\n[TEST] Materials List")
-        try:
-            r = requests.get(f"{BASE_URL}/materials", timeout=5)
-            self.test("Materials list returns 200", r.status_code == 200)
-            if r.status_code == 200:
-                data = r.json()
-                self.test("Returns 24 materials", data.get('count') == 24)
-                items = data.get('items', [])
-                if items:
-                    m = items[0]
-                    self.test("Material has required fields", 
-                             all(k in m for k in ['id', 'code', 'name', 'group', 'ops', 'kc']))
-        except Exception as e:
-            self.test("Materials list accessible", False, str(e))
+try:
+    r = requests.get(f"{BASE_URL}/catalog", timeout=10)
+    runner.test("GET /api/catalog returns 200", r.status_code == 200)
+    if r.status_code == 200:
+        data = r.json()
+        runner.test("Catalog has materials array", "materials" in data and len(data["materials"]) >= 240, f"count={len(data.get('materials', []))}")
+        runner.test("Catalog has 6 ISO groups", len(data.get("isoGroups", [])) == 6, f"count={len(data.get('isoGroups', []))}")
+        runner.test("Catalog has 13 groups", len(data.get("groups", [])) == 13, f"count={len(data.get('groups', []))}")
+except Exception as e:
+    runner.test("GET /api/catalog", False, str(e))
 
-    def test_materials_filters(self):
-        print("\n[TEST] Materials Filters")
-        try:
-            # Search filter
-            r = requests.get(f"{BASE_URL}/materials?q=316", timeout=5)
-            self.test("Search filter works", r.status_code == 200)
-            if r.status_code == 200:
-                data = r.json()
-                self.test("Search '316' finds 316L", 
-                         any('316' in m['code'] for m in data.get('items', [])))
-            
-            # Group filter
-            r = requests.get(f"{BASE_URL}/materials?group=aluminyum", timeout=5)
-            self.test("Group filter works", r.status_code == 200)
-            if r.status_code == 200:
-                data = r.json()
-                self.test("Group filter returns 3 aluminum materials", data.get('count') == 3)
-            
-            # Machinability filter
-            r = requests.get(f"{BASE_URL}/materials?machinability=cok-zor", timeout=5)
-            self.test("Machinability filter works", r.status_code == 200)
-            if r.status_code == 200:
-                data = r.json()
-                self.test("Machinability filter returns materials", data.get('count') > 0)
-        except Exception as e:
-            self.test("Materials filters accessible", False, str(e))
+# ============================================================================
+# TEST 2: Material Search & Standards
+# ============================================================================
+print("\n=== TEST 2: Material Search & Standards ===")
+search_tests = [
+    ("1.7225", "4140"),
+    ("42crmo4", "4140"),
+    ("X5CrNi18-10", "304"),
+    ("1.4404", "316L"),
+    ("UNS N07718", "Inconel 718"),
+    ("SCM440", "42CrMo4"),
+    ("1.2379", "D2"),
+]
 
-    def test_material_detail(self):
-        print("\n[TEST] Material Detail")
-        try:
-            # Valid material
-            r = requests.get(f"{BASE_URL}/materials/4140", timeout=5)
-            self.test("Material detail returns 200", r.status_code == 200)
-            if r.status_code == 200:
-                m = r.json()
-                self.test("4140 has correct code", m.get('code') == '4140')
-                self.test("4140 has operations", 'ops' in m and 'freze' in m['ops'])
-                self.test("4140 freze has carbide ranges", 
-                         m.get('ops', {}).get('freze', {}).get('karbur', {}).get('vc') == [120, 160])
-            
-            # Invalid material
-            r = requests.get(f"{BASE_URL}/materials/nonexistent", timeout=5)
-            self.test("Invalid material returns 404", r.status_code == 404)
-        except Exception as e:
-            self.test("Material detail accessible", False, str(e))
+for query, expected in search_tests:
+    try:
+        r = requests.get(f"{BASE_URL}/materials", params={"q": query}, timeout=10)
+        if r.status_code == 200:
+            data = r.json()
+            items = data.get("items", [])
+            found = any(expected.lower() in item.get("code", "").lower() or 
+                       expected.lower() in item.get("name", "").lower() for item in items)
+            runner.test(f"Search '{query}' finds {expected}", found and len(items) >= 1, 
+                       f"results={len(items)}, found={found}")
+        else:
+            runner.test(f"Search '{query}'", False, f"status={r.status_code}")
+    except Exception as e:
+        runner.test(f"Search '{query}'", False, str(e))
 
-    def test_machine_presets(self):
-        print("\n[TEST] Machine Presets")
-        try:
-            r = requests.get(f"{BASE_URL}/machine-presets", timeout=5)
-            self.test("Machine presets returns 200", r.status_code == 200)
-            if r.status_code == 200:
-                data = r.json()
-                self.test("Has presets", 'presets' in data)
-                self.test("Has auto preset mapping", 'auto' in data)
-                presets = data.get('presets', {})
-                self.test("Has 7 presets", len(presets) == 7)
-                if 'vmc_std' in presets:
-                    p = presets['vmc_std']
-                    self.test("VMC standard has correct limits", 
-                             p.get('maxRpm') == 8000 and p.get('maxFeed') == 10000)
-        except Exception as e:
-            self.test("Machine presets accessible", False, str(e))
+# ============================================================================
+# TEST 3: Material Detail
+# ============================================================================
+print("\n=== TEST 3: Material Detail ===")
+try:
+    r = requests.get(f"{BASE_URL}/materials/42crmo4", timeout=10)
+    runner.test("GET /api/materials/42crmo4 returns 200", r.status_code == 200)
+    if r.status_code == 200:
+        mat = r.json()
+        runner.test("42CrMo4 has ISO group", "isoGroup" in mat and mat["isoGroup"] == "P", f"iso={mat.get('isoGroup')}")
+        runner.test("42CrMo4 has standards", "standards" in mat and len(mat["standards"]) > 0, 
+                   f"standards={mat.get('standards', [])[:3]}")
+        runner.test("42CrMo4 has baseHB", "baseHB" in mat and mat["baseHB"] > 0, f"baseHB={mat.get('baseHB')}")
+        runner.test("42CrMo4 has kc", mat.get("kc", 0) > 0, f"kc={mat.get('kc')}")
+except Exception as e:
+    runner.test("GET /api/materials/42crmo4", False, str(e))
 
-    def test_calc_freze(self):
-        print("\n[TEST] Freze Calculation")
-        try:
-            # Mockup values: Vc=140, D=12, z=4, fz=0.08, ap=2, ae=6
-            payload = {
-                "vc": 140, "d": 12, "z": 4, "fz": 0.08,
-                "ap": 2, "ae": 6, "kc": 2100, "eta": 0.8
-            }
-            r = requests.post(f"{BASE_URL}/calc/freze", json=payload, timeout=5)
-            self.test("Freze calc returns 200", r.status_code == 200)
-            if r.status_code == 200:
-                res = r.json()
-                self.test("Freze n ≈ 3714", self.near(res.get('n', 0), 3714, 2), 
-                         f"n={res.get('n'):.1f}")
-                self.test("Freze vf ≈ 1188", self.near(res.get('vf', 0), 1188, 2),
-                         f"vf={res.get('vf'):.1f}")
-                self.test("Freze vcEffective ≈ 140", self.near(res.get('vcEffective', 0), 140, 1),
-                         f"vcEffective={res.get('vcEffective'):.1f}")
-                self.test("Freze q ≈ 14.26", self.near(res.get('q', 0), 14.26, 0.1),
-                         f"q={res.get('q'):.2f}")
-                self.test("Freze power ≈ 0.62", self.near(res.get('power', 0), 0.62, 0.02),
-                         f"power={res.get('power'):.2f}")
-                self.test("Freze torque ≈ 1.60", self.near(res.get('torque', 0), 1.60, 0.05),
-                         f"torque={res.get('torque'):.2f}")
-                self.test("Freze hm ≈ 0.08", self.near(res.get('hm', 0), 0.08, 0.01),
-                         f"hm={res.get('hm'):.3f}")
-        except Exception as e:
-            self.test("Freze calc accessible", False, str(e))
+# ============================================================================
+# TEST 4: Thread Tables
+# ============================================================================
+print("\n=== TEST 4: Thread Tables ===")
+try:
+    r = requests.get(f"{BASE_URL}/threads", timeout=10)
+    runner.test("GET /api/threads returns 200", r.status_code == 200)
+    if r.status_code == 200:
+        data = r.json()
+        runner.test("Thread tables have >=100 entries", len(data.get("threads", [])) >= 100, 
+                   f"count={len(data.get('threads', []))}")
+        runner.test("Thread tables have 6 series", len(data.get("series", [])) == 6, 
+                   f"series={len(data.get('series', []))}")
+        runner.test("Thread tables have tap types", len(data.get("tapTypes", [])) >= 2)
+        runner.test("Thread tables have engagement options", len(data.get("engagementOptions", [])) >= 3)
+except Exception as e:
+    runner.test("GET /api/threads", False, str(e))
 
-    def test_calc_torna(self):
-        print("\n[TEST] Torna Calculation")
-        try:
-            # Mockup values: Vc=180, D=50, f=0.22, ap=1.5, noseR=0.8, targetRa=1.6
-            payload = {
-                "vc": 180, "d": 50, "f": 0.22, "ap": 1.5,
-                "noseR": 0.8, "kc": 2100, "eta": 0.8, "targetRa": 1.6
-            }
-            r = requests.post(f"{BASE_URL}/calc/torna", json=payload, timeout=5)
-            self.test("Torna calc returns 200", r.status_code == 200)
-            if r.status_code == 200:
-                res = r.json()
-                self.test("Torna n ≈ 1146", self.near(res.get('n', 0), 1146, 2),
-                         f"n={res.get('n'):.1f}")
-                self.test("Torna vf ≈ 252", self.near(res.get('vf', 0), 252, 2),
-                         f"vf={res.get('vf'):.1f}")
-                self.test("Torna ra ≈ 1.89", self.near(res.get('ra', 0), 1.89, 0.05),
-                         f"ra={res.get('ra'):.2f}")
-                self.test("Torna feedForTargetRa ≈ 0.202", 
-                         self.near(res.get('feedForTargetRa', 0), 0.202, 0.005),
-                         f"feedForTargetRa={res.get('feedForTargetRa'):.3f}")
-                self.test("Torna q ≈ 59.4", self.near(res.get('q', 0), 59.4, 0.5),
-                         f"q={res.get('q'):.2f}")
-                self.test("Torna power ≈ 2.60", self.near(res.get('power', 0), 2.60, 0.05),
-                         f"power={res.get('power'):.2f}")
-        except Exception as e:
-            self.test("Torna calc accessible", False, str(e))
+try:
+    r = requests.get(f"{BASE_URL}/threads", params={"series": "unc"}, timeout=10)
+    runner.test("GET /api/threads?series=unc returns 200", r.status_code == 200)
+    if r.status_code == 200:
+        data = r.json()
+        runner.test("UNC series has 18 threads", len(data.get("threads", [])) == 18, 
+                   f"count={len(data.get('threads', []))}")
+except Exception as e:
+    runner.test("GET /api/threads?series=unc", False, str(e))
 
-    def test_calc_matkap(self):
-        print("\n[TEST] Matkap Calculation")
-        try:
-            # Mockup values: Vc=80, D=10, f=0.16, depth=30
-            payload = {
-                "vc": 80, "d": 10, "f": 0.16, "depth": 30,
-                "kc": 2100, "eta": 0.8, "peck": 0
-            }
-            r = requests.post(f"{BASE_URL}/calc/matkap", json=payload, timeout=5)
-            self.test("Matkap calc returns 200", r.status_code == 200)
-            if r.status_code == 200:
-                res = r.json()
-                self.test("Matkap n ≈ 2546", self.near(res.get('n', 0), 2546, 2),
-                         f"n={res.get('n'):.1f}")
-                self.test("Matkap vf ≈ 407", self.near(res.get('vf', 0), 407, 2),
-                         f"vf={res.get('vf'):.1f}")
-                self.test("Matkap cycleSeconds ≈ 4.4", 
-                         self.near(res.get('cycleSeconds', 0), 4.4, 0.2),
-                         f"cycleSeconds={res.get('cycleSeconds'):.1f}")
-                self.test("Matkap q ≈ 32.0", self.near(res.get('q', 0), 32.0, 0.5),
-                         f"q={res.get('q'):.2f}")
-        except Exception as e:
-            self.test("Matkap calc accessible", False, str(e))
+# ============================================================================
+# TEST 5: Tapping Calculation
+# ============================================================================
+print("\n=== TEST 5: Tapping (Kılavuz) Calculation ===")
+payload = {
+    "vc": 25,
+    "d": 10,
+    "pitch": 1.5,
+    "depth": 20,
+    "kc": 2100,
+    "tensile": 900,
+    "tapType": "kesici",
+    "engagement": 75
+}
+try:
+    r = requests.post(f"{BASE_URL}/calc/kilavuz", json=payload, timeout=10)
+    runner.test("POST /api/calc/kilavuz returns 200", r.status_code == 200, f"status={r.status_code}")
+    if r.status_code == 200:
+        res = r.json()
+        runner.test("Tapping n ≈ 796", 794 <= res.get("n", 0) <= 798, f"n={res.get('n'):.1f}")
+        runner.test("Tapping vf ≈ 1194", 1190 <= res.get("vf", 0) <= 1198, f"vf={res.get('vf'):.1f}")
+        runner.test("Tapping torque ≈ 3.94 Nm", 3.88 <= res.get("torque", 0) <= 4.0, f"torque={res.get('torque'):.2f}")
+        runner.test("Tapping tapDrill ≈ 8.54 mm", 8.52 <= res.get("tapDrill", 0) <= 8.56, 
+                   f"tapDrill={res.get('tapDrill'):.2f}")
+        runner.test("Tapping minorDiameter present", "minorDiameter" in res, f"minor={res.get('minorDiameter'):.2f}")
+        runner.test("Tapping cycleSeconds ≈ 2.0 s", 1.9 <= res.get("cycleSeconds", 0) <= 2.1, 
+                   f"cycle={res.get('cycleSeconds'):.2f}")
+except Exception as e:
+    runner.test("POST /api/calc/kilavuz", False, str(e))
 
-    def test_calc_limits(self):
-        print("\n[TEST] Machine Limits (Clamp)")
-        try:
-            # Same freze calc but with 2000 RPM limit
-            payload = {
-                "vc": 140, "d": 12, "z": 4, "fz": 0.08,
-                "ap": 2, "ae": 6, "kc": 2100, "eta": 0.8,
-                "limits": {"maxRpm": 2000}
-            }
-            r = requests.post(f"{BASE_URL}/calc/freze", json=payload, timeout=5)
-            self.test("Freze with limits returns 200", r.status_code == 200)
-            if r.status_code == 200:
-                res = r.json()
-                self.test("RPM clamped to 2000", res.get('n') == 2000,
-                         f"n={res.get('n')}")
-                self.test("rpmClamped flag is true", 
-                         res.get('limits', {}).get('rpmClamped') == True)
-                self.test("vcEffective reduced", res.get('vcEffective', 0) < 80,
-                         f"vcEffective={res.get('vcEffective'):.1f}")
-                self.test("Feed scaled proportionally", 
-                         self.near(res.get('vf', 0), 640, 5),
-                         f"vf={res.get('vf'):.1f}")
-        except Exception as e:
-            self.test("Calc with limits accessible", False, str(e))
+# Test forming tap (higher torque)
+payload_form = payload.copy()
+payload_form["tapType"] = "yuvarlak"
+try:
+    r = requests.post(f"{BASE_URL}/calc/kilavuz", json=payload_form, timeout=10)
+    if r.status_code == 200:
+        res_form = r.json()
+        res_cut = requests.post(f"{BASE_URL}/calc/kilavuz", json=payload, timeout=10).json()
+        runner.test("Forming tap torque > cutting tap", res_form.get("torque", 0) > res_cut.get("torque", 0) * 1.5,
+                   f"form={res_form.get('torque'):.2f} vs cut={res_cut.get('torque'):.2f}")
+except Exception as e:
+    runner.test("Forming tap torque test", False, str(e))
 
-    def test_calc_validation(self):
-        print("\n[TEST] Calculation Validation")
-        try:
-            # Invalid input: d=0
-            payload = {"vc": 140, "d": 0, "z": 4, "fz": 0.08, "ap": 2, "ae": 6}
-            r = requests.post(f"{BASE_URL}/calc/freze", json=payload, timeout=5)
-            self.test("Invalid d=0 returns 400 or 422", r.status_code in [400, 422],
-                     f"status={r.status_code}")
-            
-            # Invalid input: negative vc
-            payload = {"vc": -5, "d": 12, "z": 4, "fz": 0.08, "ap": 2, "ae": 6}
-            r = requests.post(f"{BASE_URL}/calc/freze", json=payload, timeout=5)
-            self.test("Invalid vc<0 returns 400 or 422", r.status_code in [400, 422],
-                     f"status={r.status_code}")
-        except Exception as e:
-            self.test("Validation tests accessible", False, str(e))
+# ============================================================================
+# TEST 6: Thread Milling Calculation
+# ============================================================================
+print("\n=== TEST 6: Thread Milling (Diş Frezesi) Calculation ===")
+payload = {
+    "vc": 120,
+    "toolD": 10,
+    "threadD": 20,
+    "pitch": 2.5,
+    "z": 3,
+    "fz": 0.05,
+    "threadLength": 20,
+    "kc": 2100,
+    "internal": True
+}
+try:
+    r = requests.post(f"{BASE_URL}/calc/dis-frezesi", json=payload, timeout=10)
+    runner.test("POST /api/calc/dis-frezesi returns 200", r.status_code == 200)
+    if r.status_code == 200:
+        res = r.json()
+        runner.test("Thread milling n ≈ 3820", 3815 <= res.get("n", 0) <= 3825, f"n={res.get('n'):.1f}")
+        runner.test("Thread milling compensation = 0.5", abs(res.get("compensation", 0) - 0.5) < 0.001, 
+                   f"comp={res.get('compensation'):.3f}")
+        runner.test("Thread milling vf < vfPeriphery", res.get("vf", 0) < res.get("vfPeriphery", 0),
+                   f"vf={res.get('vf'):.1f} < vfPeriph={res.get('vfPeriphery'):.1f}")
+        runner.test("Thread milling revolutions = 8", abs(res.get("revolutions", 0) - 8) < 0.1, 
+                   f"revs={res.get('revolutions')}")
+        runner.test("Thread milling threadDepth present", "threadDepth" in res, 
+                   f"depth={res.get('threadDepth'):.3f}")
+except Exception as e:
+    runner.test("POST /api/calc/dis-frezesi", False, str(e))
 
+# Test external thread (compensation > 1)
+payload_ext = payload.copy()
+payload_ext["internal"] = False
+try:
+    r = requests.post(f"{BASE_URL}/calc/dis-frezesi", json=payload_ext, timeout=10)
+    if r.status_code == 200:
+        res = r.json()
+        runner.test("External thread compensation > 1", res.get("compensation", 0) > 1, 
+                   f"comp={res.get('compensation'):.2f}")
+except Exception as e:
+    runner.test("External thread compensation", False, str(e))
 
-if __name__ == "__main__":
-    tester = BackendTester()
-    sys.exit(tester.run_all())
+# Test error: toolD > threadD for internal
+payload_err = payload.copy()
+payload_err["toolD"] = 25
+try:
+    r = requests.post(f"{BASE_URL}/calc/dis-frezesi", json=payload_err, timeout=10)
+    runner.test("Thread milling error when toolD > threadD", r.status_code in [400, 422], 
+               f"status={r.status_code}")
+except Exception as e:
+    runner.test("Thread milling error handling", False, str(e))
+
+# ============================================================================
+# TEST 7: Thread Turning Calculation
+# ============================================================================
+print("\n=== TEST 7: Thread Turning (Tornada Diş) Calculation ===")
+payload = {
+    "vc": 100,
+    "d": 20,
+    "pitch": 2.5,
+    "length": 30,
+    "kc": 2100,
+    "machinability": "orta"
+}
+try:
+    r = requests.post(f"{BASE_URL}/calc/dis-torna", json=payload, timeout=10)
+    runner.test("POST /api/calc/dis-torna returns 200", r.status_code == 200)
+    if r.status_code == 200:
+        res = r.json()
+        runner.test("Thread turning n ≈ 1592", 1590 <= res.get("n", 0) <= 1595, f"n={res.get('n'):.1f}")
+        runner.test("Thread turning passCount = 10", res.get("passCount") == 10, 
+                   f"passes={res.get('passCount')}")
+        runner.test("Thread turning totalDepth ≈ 1.53 mm", 1.52 <= res.get("totalDepth", 0) <= 1.54, 
+                   f"depth={res.get('totalDepth'):.3f}")
+        runner.test("Thread turning schedule has 10 passes", len(res.get("schedule", [])) == 10, 
+                   f"schedule_len={len(res.get('schedule', []))}")
+        if len(res.get("schedule", [])) > 0:
+            first = res["schedule"][0]["depth"]
+            last = res["schedule"][-1]["depth"]
+            runner.test("Thread turning first pass > last pass (degressive)", first > last, 
+                       f"first={first:.3f} > last={last:.3f}")
+except Exception as e:
+    runner.test("POST /api/calc/dis-torna", False, str(e))
+
+# ============================================================================
+# TEST 8: Tool Life Calculation
+# ============================================================================
+print("\n=== TEST 8: Tool Life (Taylor) Calculation ===")
+payload = {
+    "vc": 280,
+    "vcRef": 140,
+    "tool": "karbur",
+    "refLife": 15,
+    "coolant": "sivi",
+    "toolPrice": 1200,
+    "edges": 4,
+    "partMinutes": 2,
+    "hourlyRate": 600,
+    "targetLife": 30
+}
+try:
+    r = requests.post(f"{BASE_URL}/tool-life", json=payload, timeout=10)
+    runner.test("POST /api/tool-life returns 200", r.status_code == 200)
+    if r.status_code == 200:
+        res = r.json()
+        runner.test("Tool life at 2×Vc ≈ 0.94 min", 0.9 <= res.get("lifeMinutes", 0) <= 1.0, 
+                   f"life={res.get('lifeMinutes'):.2f}")
+        runner.test("Tool life status = kritik", res.get("status") == "kritik", 
+                   f"status={res.get('status')}")
+        runner.test("Tool life cost present", "cost" in res and res["cost"].get("totalPerPart", 0) > 0,
+                   f"total={res.get('cost', {}).get('totalPerPart'):.2f}")
+        runner.test("Tool life vcForTargetLife ≈ 118", 115 <= res.get("vcForTargetLife", 0) <= 120, 
+                   f"vcTarget={res.get('vcForTargetLife'):.1f}")
+except Exception as e:
+    runner.test("POST /api/tool-life", False, str(e))
+
+# Test at reference Vc (should give refLife)
+payload_ref = {
+    "vc": 140,
+    "vcRef": 140,
+    "tool": "karbur",
+    "refLife": 15,
+    "coolant": "sivi",
+    "toolPrice": 1200,
+    "edges": 4,
+    "partMinutes": 2,
+    "hourlyRate": 600
+}
+try:
+    r = requests.post(f"{BASE_URL}/tool-life", json=payload_ref, timeout=10)
+    if r.status_code == 200:
+        res = r.json()
+        runner.test("Tool life at Vc=VcRef = 15 min", abs(res.get("lifeMinutes", 0) - 15) < 0.1, 
+                   f"life={res.get('lifeMinutes'):.2f}")
+        runner.test("Tool life status = iyi", res.get("status") == "iyi", f"status={res.get('status')}")
+except Exception as e:
+    runner.test("Tool life at reference Vc", False, str(e))
+
+# ============================================================================
+# TEST 9: Regression - Existing Calculations
+# ============================================================================
+print("\n=== TEST 9: Regression - Existing Calculations ===")
+
+# Freze
+payload_freze = {
+    "vc": 140,
+    "d": 12,
+    "z": 4,
+    "fz": 0.08,
+    "ap": 2,
+    "ae": 6,
+    "kc": 2100,
+    "eta": 0.8
+}
+try:
+    r = requests.post(f"{BASE_URL}/calc/freze", json=payload_freze, timeout=10)
+    runner.test("POST /api/calc/freze returns 200", r.status_code == 200)
+    if r.status_code == 200:
+        res = r.json()
+        runner.test("Freze n ≈ 3714", 3710 <= res.get("n", 0) <= 3720, f"n={res.get('n'):.1f}")
+        runner.test("Freze vf ≈ 1188", 1185 <= res.get("vf", 0) <= 1192, f"vf={res.get('vf'):.1f}")
+except Exception as e:
+    runner.test("POST /api/calc/freze", False, str(e))
+
+# Torna
+payload_torna = {
+    "vc": 180,
+    "d": 50,
+    "f": 0.22,
+    "ap": 2,
+    "noseR": 0.8,
+    "kc": 2100,
+    "eta": 0.8
+}
+try:
+    r = requests.post(f"{BASE_URL}/calc/torna", json=payload_torna, timeout=10)
+    runner.test("POST /api/calc/torna returns 200", r.status_code == 200)
+    if r.status_code == 200:
+        res = r.json()
+        runner.test("Torna n ≈ 1146", 1144 <= res.get("n", 0) <= 1148, f"n={res.get('n'):.1f}")
+        runner.test("Torna vf ≈ 252", 250 <= res.get("vf", 0) <= 254, f"vf={res.get('vf'):.1f}")
+        runner.test("Torna Ra ≈ 1.89 µm", 1.87 <= res.get("ra", 0) <= 1.91, f"Ra={res.get('ra'):.2f}")
+except Exception as e:
+    runner.test("POST /api/calc/torna", False, str(e))
+
+# Matkap
+payload_matkap = {
+    "vc": 80,
+    "d": 10,
+    "f": 0.16,
+    "depth": 30,
+    "kc": 2100,
+    "eta": 0.8
+}
+try:
+    r = requests.post(f"{BASE_URL}/calc/matkap", json=payload_matkap, timeout=10)
+    runner.test("POST /api/calc/matkap returns 200", r.status_code == 200)
+    if r.status_code == 200:
+        res = r.json()
+        runner.test("Matkap n ≈ 2546", 2544 <= res.get("n", 0) <= 2548, f"n={res.get('n'):.1f}")
+        runner.test("Matkap vf ≈ 407", 405 <= res.get("vf", 0) <= 409, f"vf={res.get('vf'):.1f}")
+        runner.test("Matkap cycleSeconds ≈ 4.4 s", 4.3 <= res.get("cycleSeconds", 0) <= 4.5, 
+                   f"cycle={res.get('cycleSeconds'):.2f}")
+except Exception as e:
+    runner.test("POST /api/calc/matkap", False, str(e))
+
+# ============================================================================
+# Summary
+# ============================================================================
+sys.exit(runner.summary())

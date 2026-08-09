@@ -46,7 +46,7 @@ export function groupByDay(history) {
 export function todayStats(history) {
   const today = startOfDay(new Date()).getTime();
   const items = history.filter((r) => startOfDay(r.createdAt).getTime() === today);
-  const counts = { freze: 0, torna: 0, matkap: 0 };
+  const counts = { freze: 0, torna: 0, matkap: 0, dis: 0 };
   items.forEach((r) => {
     if (counts[r.op] !== undefined) counts[r.op] += 1;
   });
@@ -61,6 +61,16 @@ export function describeRecord(rec, unitSystem) {
   if (rec.op === 'freze' && i.z) parts.push(`${i.z} ağız`);
   if (rec.op === 'matkap' && i.depth) parts.push(`${formatQty('length', i.depth, unitSystem)} ${unitLabel('length', unitSystem)} derinlik`);
   if (rec.op === 'torna' && i.direction) parts.push(i.direction === 'id' ? 'İç çap' : 'Dış çap');
+  if (rec.op === 'dis') {
+    const modeLabel = { kilavuz: 'Kılavuz', frezeleme: 'Diş frezesi', torna: 'Torna dişi' }[i.mode] || '';
+    return {
+      title: modeLabel || 'Diş',
+      material: rec.materialCode,
+      subtitle: [rec.threadLabel, i.pitch ? `adım ${formatQty('length', i.pitch, unitSystem)} ${unitLabel('length', unitSystem)}` : '']
+        .filter(Boolean).join(' · '),
+      time: timeLabel(rec.createdAt),
+    };
+  }
   return {
     title: `${opLabel(rec.op)}`,
     material: rec.materialCode,
@@ -85,6 +95,13 @@ export function buildShareText(rec, unitSystem, materialName) {
     lines.push(`Uç: ${i.tool === 'hss' ? 'HSS kalem' : 'Karbür uç'} · rε ${formatQty('length', i.noseR, unitSystem)} ${L('length')}`);
     lines.push(`Ø${formatQty('length', i.d, unitSystem)} ${L('length')} · ${i.direction === 'id' ? 'İç çap' : 'Dış çap'}`);
     lines.push(`Vc ${formatQty('vc', i.vc, unitSystem)} ${L('vc')} · f ${formatQty('f', i.f, unitSystem)} ${L('f')} · ap ${formatQty('length', i.ap, unitSystem)} ${L('length')}`);
+  } else if (rec.op === 'dis') {
+    const modeLabel = { kilavuz: 'Kılavuz', frezeleme: 'Diş frezesi', torna: 'Torna dişi' }[i.mode] || 'Diş';
+    lines.push(`Yöntem: ${modeLabel}${rec.threadLabel ? ` · ${rec.threadLabel}` : ''}`);
+    lines.push(`Ø${formatQty('length', i.d, unitSystem)} ${L('length')} · adım ${formatQty('length', i.pitch, unitSystem)} ${L('length')}`);
+    lines.push(`Vc ${formatQty('vc', i.vc, unitSystem)} ${L('vc')}`);
+    if (o.tapDrill) lines.push(`Kılavuz matkabı: ${formatQty('length', o.tapDrill, unitSystem)} ${L('length')}`);
+    if (o.passCount) lines.push(`Paso sayısı: ${o.passCount}`);
   } else {
     lines.push(`Matkap: ${i.tool === 'hss' ? 'HSS' : 'Karbür'} Ø${formatQty('length', i.d, unitSystem)} ${L('length')}`);
     lines.push(`Vc ${formatQty('vc', i.vc, unitSystem)} ${L('vc')} · f ${formatQty('f', i.f, unitSystem)} ${L('f')} · derinlik ${formatQty('length', i.depth, unitSystem)} ${L('length')}`);

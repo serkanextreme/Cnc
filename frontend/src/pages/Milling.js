@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import { useApp } from '../context/AppContext';
 import { MaterialPickerDrawer, MaterialSummaryCard } from '../components/talas/MaterialPicker';
 import { MachineLimitCard } from '../components/talas/MachineLimitCard';
+import { HardnessCard } from '../components/talas/HardnessCard';
+import { ToolLifeCard } from '../components/talas/ToolLifeCard';
 import { RecommendPanel } from '../components/talas/Recommend';
 import { FormulaPanel, ResultCard } from '../components/talas/ResultCard';
 import {
@@ -20,7 +22,7 @@ import {
   SegmentedToggle,
   Stepper,
 } from '../components/talas/Primitives';
-import { calcMilling, evaluateRange, worstStatus } from '../lib/calc';
+import { adjustForHardness, calcMilling, evaluateRange, worstStatus } from '../lib/calc';
 import { midOf, recommended, resolveLimits, TOOL_MATERIALS } from '../data/materials';
 import { buildShareText, shareText } from '../lib/records';
 import { formatNumber, formatQty, formatRange, unitLabel } from '../lib/units';
@@ -34,6 +36,10 @@ export default function Milling() {
   } = useApp();
   const [pickerOpen, setPickerOpen] = useState(false);
   const d = drafts.freze;
+  const material = useMemo(
+    () => (d.hardnessOverride > 0 ? adjustForHardness(activeMaterial, d.hardnessOverride) : activeMaterial),
+    [activeMaterial, d.hardnessOverride],
+  );
   const recordId = params.get('record');
 
   /* Geçmişten yeniden aç */
@@ -47,7 +53,7 @@ export default function Milling() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
-  const rec = recommended(activeMaterial, 'freze', d.tool);
+  const rec = recommended(material, 'freze', d.tool);
   const limits = resolveLimits('freze', settings);
 
   const errors = useMemo(() => {
@@ -67,9 +73,9 @@ export default function Milling() {
     if (hasErrors) return null;
     return calcMilling({
       vc: d.vc, d: d.d, z: d.z, fz: d.fz, ap: d.ap, ae: d.ae,
-      kc: activeMaterial.kc, eta: settings.efficiency, limits,
+      kc: material.kc, eta: settings.efficiency, limits,
     });
-  }, [d, activeMaterial, settings.efficiency, limits, hasErrors]);
+  }, [d, material, settings.efficiency, limits, hasErrors]);
 
   const vcEval = rec ? evaluateRange(d.vc, rec.vc) : { status: 'neutral', label: '—' };
   const fzEval = rec ? evaluateRange(d.fz, rec.fz) : { status: 'neutral', label: '—' };
@@ -136,6 +142,14 @@ export default function Milling() {
 
       <main className="space-y-6 px-5 pt-4">
         <MaterialSummaryCard material={activeMaterial} onChange={() => setPickerOpen(true)} />
+
+        <HardnessCard
+          op="freze"
+          material={activeMaterial}
+          adjusted={material}
+          value={d.hardnessOverride || 0}
+          onChange={(v) => updateDraft('freze', { hardnessOverride: v })}
+        />
 
         <section aria-labelledby="takim-baslik">
           <SectionHeading eyebrow="TAKIM" title="Kesici bilgisi" />
@@ -324,6 +338,16 @@ export default function Milling() {
           />
         ) : null}
 
+        <ToolLifeCard
+          op="freze"
+          vc={d.vc}
+          vcRange={rec ? rec.vc : null}
+          tool={d.tool}
+          coolant={d.coolant || material.coolant}
+          cycleSeconds={result && result.cycleSeconds ? result.cycleSeconds : 0}
+          onApplyVc={(v) => updateDraft('freze', { vc: v })}
+        />
+
         <MachineLimitCard
           op="freze"
           clamped={!!(result && (result.limits.rpmClamped || result.limits.feedClamped))}
@@ -344,7 +368,7 @@ export default function Milling() {
               expr: 'Q = Ap × Ae × Vf',
               note: `Ap = ${formatQty('length', d.ap, unitSystem)} · Ae = ${formatQty('length', d.ae, unitSystem)}`,
             },
-            { expr: 'Pc = Q × kc / 60.000 / η', note: `kc = ${activeMaterial.kc} N/mm²` },
+            { expr: 'Pc = Q × kc / 60.000 / η', note: `kc = ${material.kc} N/mm²` },
           ]}
         />
 

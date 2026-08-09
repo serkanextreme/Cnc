@@ -12,6 +12,7 @@ export const KEYS = {
   customMaterials: `${PREFIX}customMaterials`,
   activeMaterial: `${PREFIX}activeMaterial`,
   drafts: `${PREFIX}drafts`,
+  tools: `${PREFIX}tools`,
 };
 
 export function readJSON(key, fallback) {
@@ -55,6 +56,7 @@ export function exportAll() {
     customMaterials: readJSON(KEYS.customMaterials, []),
     activeMaterial: readJSON(KEYS.activeMaterial, null),
     drafts: readJSON(KEYS.drafts, null),
+    tools: readJSON(KEYS.tools, []),
   };
 }
 
@@ -68,6 +70,7 @@ export function importAll(payload) {
   if (Array.isArray(payload.customMaterials)) writeJSON(KEYS.customMaterials, payload.customMaterials);
   if (payload.activeMaterial) writeJSON(KEYS.activeMaterial, payload.activeMaterial);
   if (payload.drafts) writeJSON(KEYS.drafts, payload.drafts);
+  if (Array.isArray(payload.tools)) writeJSON(KEYS.tools, payload.tools);
   return true;
 }
 

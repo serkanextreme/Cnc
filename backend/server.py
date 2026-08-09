@@ -29,6 +29,9 @@ db = client[os.environ.get('DB_NAME', 'talas')]
 with open(ROOT_DIR / 'materials.json', encoding='utf-8') as fh:
     CATALOG = json.load(fh)
 
+with open(ROOT_DIR / 'threads.json', encoding='utf-8') as fh:
+    THREADS = json.load(fh)
+
 MATERIALS: List[dict] = CATALOG['materials']
 MATERIAL_BY_ID: Dict[str, dict] = {m['id']: m for m in MATERIALS}
 PRESETS: Dict[str, dict] = CATALOG['machinePresets']
@@ -99,7 +102,9 @@ async def root():
         "materials": len(MATERIALS),
         "endpoints": ["/api/health", "/api/catalog", "/api/materials",
                       "/api/materials/{id}", "/api/machine-presets",
-                      "/api/calc/freze", "/api/calc/torna", "/api/calc/matkap"],
+                      "/api/calc/freze", "/api/calc/torna", "/api/calc/matkap",
+                      "/api/threads", "/api/calc/kilavuz", "/api/calc/dis-frezesi",
+                      "/api/calc/dis-torna", "/api/tool-life"],
     }
 
 
@@ -174,6 +179,124 @@ async def calc_torna(req: TurningRequest):
                        "Q = ap × f × Vc", "Ra = f² / (32 × rε)",
                        "f = √(32 × Ra × rε)"]
     return res
+
+
+class TappingRequest(BaseModel):
+    vc: float = Field(..., gt=0)
+    d: float = Field(..., gt=0, description="Dis nominal capi mm")
+    pitch: float = Field(..., gt=0, description="Adim mm")
+    depth: float = Field(..., gt=0, description="Dis derinligi mm")
+    kc: float = Field(2100, gt=0)
+    tensile: float = Field(900, gt=0)
+    tapType: str = Field("kesici")
+    engagement: float = Field(75, ge=50, le=100)
+    eta: float = Field(0.8, gt=0, le=1)
+    limits: Optional[Limits] = None
+
+
+class ThreadMillRequest(BaseModel):
+    vc: float = Field(..., gt=0)
+    toolD: float = Field(..., gt=0)
+    threadD: float = Field(..., gt=0)
+    pitch: float = Field(..., gt=0)
+    z: int = Field(3, ge=1)
+    fz: float = Field(..., gt=0)
+    threadLength: float = Field(..., gt=0)
+    kc: float = Field(2100, gt=0)
+    internal: bool = True
+    eta: float = Field(0.8, gt=0, le=1)
+    limits: Optional[Limits] = None
+
+
+class ThreadTurnRequest(BaseModel):
+    vc: float = Field(..., gt=0)
+    d: float = Field(..., gt=0)
+    pitch: float = Field(..., gt=0)
+    length: float = Field(..., gt=0)
+    kc: float = Field(2100, gt=0)
+    machinability: str = Field("orta")
+    angle: int = Field(60)
+    internal: bool = False
+    eta: float = Field(0.8, gt=0, le=1)
+    passes: Optional[int] = None
+    limits: Optional[Limits] = None
+
+
+class ToolLifeRequest(BaseModel):
+    vc: float = Field(..., gt=0)
+    vcRef: float = Field(..., gt=0)
+    tool: str = Field("karbur")
+    refLife: float = Field(15, gt=0)
+    coolant: str = Field("sivi")
+    toolPrice: float = Field(0, ge=0)
+    edges: int = Field(1, ge=1)
+    partMinutes: float = Field(1, gt=0)
+    hourlyRate: float = Field(0, ge=0)
+    targetLife: Optional[float] = None
+
+
+@api_router.get("/threads")
+async def thread_tables(series: Optional[str] = None):
+    rows = THREADS["threads"]
+    if series:
+        rows = [r for r in rows if r[1] == series]
+    return {"series": THREADS["series"], "count": len(rows), "threads": rows,
+            "tapTypes": THREADS["tapTypes"], "engagementOptions": THREADS["engagementOptions"]}
+
+
+@api_router.post("/calc/kilavuz")
+async def calc_kilavuz(req: TappingRequest):
+    try:
+        res = ce.calc_tapping(req.vc, req.d, req.pitch, req.depth, req.kc, req.tensile,
+                              req.tapType, req.engagement, req.eta, _limits(req.limits))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    res["formulas"] = ["n = (1000 × Vc) / (π × D)", "Vf = adım × n",
+                       "M = kc × P × d / 8000", "Matkap = d − (%dis × P) / 76,98"]
+    return res
+
+
+@api_router.post("/calc/dis-frezesi")
+async def calc_dis_frezesi(req: ThreadMillRequest):
+    try:
+        res = ce.calc_thread_milling(req.vc, req.toolD, req.threadD, req.pitch, req.z, req.fz,
+                                     req.threadLength, req.kc, req.internal, req.eta,
+                                     _limits(req.limits))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    res["formulas"] = ["n = (1000 × Vc) / (π × Dt)", "Vf(çevre) = fz × z × n",
+                       "Vf(merkez) = Vf × (Ddiş − Dt) / Ddiş"]
+    return res
+
+
+@api_router.post("/calc/dis-torna")
+async def calc_dis_torna(req: ThreadTurnRequest):
+    try:
+        res = ce.calc_thread_turning(req.vc, req.d, req.pitch, req.length, req.kc,
+                                     req.machinability, req.angle, req.internal, req.eta,
+                                     _limits(req.limits), 2.0, req.passes)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    res["formulas"] = ["n = (1000 × Vc) / (π × D)", "Vf = adım × n",
+                       "h = 0,6134 × P", "ap(i) = h × (√(i/N) − √((i−1)/N))"]
+    return res
+
+
+@api_router.post("/tool-life")
+async def tool_life(req: ToolLifeRequest):
+    life = ce.tool_life_minutes(req.vc, req.vcRef, req.tool, req.refLife, req.coolant)
+    cost = ce.tool_cost(req.toolPrice, req.edges, life, req.partMinutes, req.hourlyRate)
+    out = {
+        "lifeMinutes": life,
+        "status": ce.wear_status(life),
+        "cost": cost,
+        "formula": "Vc × T^n = C  →  T = T_ref × (Vc_ref / Vc)^(1/n)",
+        "nExponent": ce.TAYLOR_N.get(req.tool, 0.25),
+    }
+    if req.targetLife:
+        out["vcForTargetLife"] = ce.vc_for_target_life(req.targetLife, req.vcRef, req.tool,
+                                                       req.refLife, req.coolant)
+    return out
 
 
 @api_router.post("/calc/matkap")

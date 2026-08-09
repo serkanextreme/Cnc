@@ -179,3 +179,41 @@ Frontend (offline-first PWA, React + Tailwind):
   4. Aktif malzeme kartına `data-testid="active-material-card"` eklendi.
 - **Yanlış alarm olarak doğrulananlar:** Torna preset clamp (lathe_conv → devir 2.000'e sınırlandı, efektif Vc 126 m/dk) ve input `data-testid`'leri — manuel olarak çalıştığı doğrulandı.
 - **Çevrimdışı doğrulama:** Ağ kapatılıp sayfa yenilendi → uygulama açıldı, gezinme ve hesaplama çalıştı (Torna 1.146 dev/dk).
+
+---
+
+## PHASE 3 — Kılavuz/Diş, Takım Ömrü & Maliyet, 247 Malzemelik ISO Kütüphanesi
+
+Kullanıcı istekleri (onaylı):
+1. ~250 malzeme kalitesi, ISO P/M/K/N/S/H gruplu, AISI/DIN/EN/TS karşılıkları + sertliğe göre otomatik Vc düzeltmesi
+2. Kılavuz (tap) + diş frezesi (helis interpolasyon) + tornada diş çekme (paso planı); Metrik kaba/ince + UNC/UNF + BSP + NPT tabloları
+3. Takım ömrü (Taylor) + parça başı maliyet (takım fiyatı, ağız sayısı, tezgâh saat ücreti) — para birimi TL
+4. Aşınma uyarısı: hem "Vc'yi düşür → şu ömür" önerisi hem takım kullanım sayacı (%80 uyarı)
+
+### Phase 3 POC ✅ (116/116 test geçti — /app/test_core2.py)
+- Kılavuz matkap çapı standart tabloyla ±0,13 mm içinde (M3→2,5 … M30→26,5)
+- Kılavuz torku M = kc × P × d / 8000, ovalama kılavuzu Kf = 0,6 × Rm
+- Diş frezesi merkez ilerleme telafisi Vf × (Ddiş − Dt)/Ddiş
+- Torna diş çekme: paso sayısı tablosu (1,5 mm → 6 paso) + degresif dalma (Σap = h)
+- Taylor: T = T_ref × (Vc_ref/Vc)^(1/n) (karbür 0,25 · HSS 0,125), soğutma faktörü
+- Maliyet: uç maliyeti, parça/uç, parça başı takım + tezgâh maliyeti
+- Katalog: 247 kalite, 6 ISO grubu, 13 aile, 51 alt grup; v1'deki 24 malzeme birebir korundu
+- Standart araması: 1.7225 / 42CrMo4 / X5CrNi18-10 / UNS N07718 / SCM440 → doğru malzeme
+
+### Phase 3 Uygulama ✅
+Backend: `grades_source.py` + `build_catalog.py` (247 kalite üretimi), `threads.json` (103 diş ölçüsü),
+`calc_engine.py` (kılavuz/diş frezesi/diş çekme + Taylor + maliyet + sertlik düzeltmesi),
+API: `/api/threads`, `/api/calc/kilavuz`, `/api/calc/dis-frezesi`, `/api/calc/dis-torna`, `/api/tool-life`
+
+Frontend:
+- `/dis` **Kılavuz / Diş** ekranı — 3 mod (Kılavuz · Diş frezesi · Torna dişi), 6 diş serisi, 103 ölçü,
+  diş dolgunluğu %65–100, ovalama/kesici kılavuz, paso planı listesi
+- `ToolLifeCard` — tüm hesap ekranlarında: tahmini ömür (dk), parça başı takım+tezgâh maliyeti,
+  ömür kısaysa "Vc'yi şu değere düşür" tek dokunuş önerisi, kayıtlı takıma kullanım ekleme
+- `/takimlar` **Takımlarım** — takım CRUD, kullanım sayacı + ilerleme çubuğu, %80 ve %100 uyarıları,
+  "+5 dk / +30 dk / Yeni uç / Sil"
+- `HardnessCard` — ölçülen sertlik girişi; Vc/ilerleme/kc canlı düzeltilir (ör. 4140 @200 HB → Vc 149–198, kc 1853)
+- Malzemeler: ISO grup filtresi, standart (AISI/DIN/EN/TS/UNS) araması, standart etiketleri, "daha fazla göster"
+- Malzeme detayı: ISO grubu, HB eşdeğeri, standart karşılıkları listesi
+- Ayarlar: para birimi, referans/hedef ömür, takım fiyatı, ağız sayısı, saat ücreti, parça süresi
+- Alt sekmeler 5'e çıktı: Hesapla · Malzeme · Takım · Geçmiş · Ayarlar

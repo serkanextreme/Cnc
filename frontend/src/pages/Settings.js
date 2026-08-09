@@ -1,13 +1,16 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  Bolt,
   CircleDotDashed,
+  Coins,
   Download,
   Drill,
   Gauge,
   Lock,
   RotateCw,
   Ruler,
+  Timer,
   Trash2,
   Upload,
   WifiOff,
@@ -36,13 +39,20 @@ const OPS = [
   { id: 'freze', label: 'Freze', icon: CircleDotDashed },
   { id: 'torna', label: 'Torna', icon: RotateCw },
   { id: 'matkap', label: 'Matkap', icon: Drill },
+  { id: 'dis', label: 'Kılavuz / Diş', icon: Bolt },
+];
+
+const CURRENCIES = [
+  { id: 'TL', label: 'TL' },
+  { id: 'USD', label: 'USD' },
+  { id: 'EUR', label: 'EUR' },
 ];
 
 export default function SettingsPage() {
   const navigate = useNavigate();
   const {
     settings, updateSettings, updateManualLimit, setPresetForOp,
-    history, customMaterials, clearHistory, replaceAll,
+    history, customMaterials, clearHistory, replaceAll, tools,
   } = useApp();
   const fileRef = useRef(null);
   const [busy, setBusy] = useState(false);
@@ -266,13 +276,107 @@ export default function SettingsPage() {
           </div>
         </section>
 
+        <section aria-label="Takım ömrü ve maliyet">
+          <SectionHeading
+            eyebrow="TAKIM ÖMRÜ"
+            title="Ömür ve maliyet"
+            right={<StatusChip tone="accent" icon={Timer}>T{settings.refLife || 15} dk</StatusChip>}
+          />
+          <div className="overflow-hidden rounded-theme border border-border bg-card divide-y divide-border">
+            <div className="flex items-center gap-3 px-4 py-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-theme bg-muted text-accent">
+                <Coins className="h-[18px] w-[18px]" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-card-foreground">Para birimi</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">Maliyet hesaplarında kullanılır</p>
+              </div>
+            </div>
+            <div className="px-4 py-3">
+              <SegmentedToggle
+                options={CURRENCIES}
+                value={settings.currency || 'TL'}
+                onChange={(v) => updateSettings({ currency: v })}
+                ariaLabel="Para birimi"
+                testId="currency-toggle"
+              />
+            </div>
+            <div className="grid grid-cols-2 divide-x divide-border">
+              <NumericField
+                id="settings-ref-life"
+                label="Referans ömür"
+                hint="Taylor T_ref"
+                kind="deg"
+                unitOverride="dk"
+                value={settings.refLife || 15}
+                onChange={(v) => updateSettings({ refLife: Math.max(1, v) })}
+                testId="settings-ref-life"
+              />
+              <NumericField
+                id="settings-target-life"
+                label="Hedef ömür"
+                hint="Vc önerisi için"
+                kind="deg"
+                unitOverride="dk"
+                value={settings.targetLife || 30}
+                onChange={(v) => updateSettings({ targetLife: Math.max(1, v) })}
+                testId="settings-target-life"
+              />
+            </div>
+            <div className="grid grid-cols-2 divide-x divide-border">
+              <NumericField
+                id="settings-tool-price"
+                label="Takım fiyatı"
+                kind="deg"
+                unitOverride={settings.currency || 'TL'}
+                value={settings.toolPrice}
+                onChange={(v) => updateSettings({ toolPrice: v })}
+                testId="settings-tool-price"
+              />
+              <NumericField
+                id="settings-tool-edges"
+                label="Kesici ağız"
+                kind="deg"
+                unitOverride="adet"
+                value={settings.toolEdges}
+                onChange={(v) => updateSettings({ toolEdges: Math.max(1, Math.round(v)) })}
+                testId="settings-tool-edges"
+              />
+            </div>
+            <div className="grid grid-cols-2 divide-x divide-border">
+              <NumericField
+                id="settings-hourly"
+                label="Tezgâh saat ücreti"
+                kind="deg"
+                unitOverride={`${settings.currency || 'TL'}/s`}
+                value={settings.hourlyRate}
+                onChange={(v) => updateSettings({ hourlyRate: v })}
+                testId="settings-hourly-rate"
+              />
+              <NumericField
+                id="settings-part-min"
+                label="Parça süresi"
+                kind="deg"
+                unitOverride="dk"
+                value={settings.partMinutes}
+                onChange={(v) => updateSettings({ partMinutes: v })}
+                testId="settings-part-minutes"
+              />
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Takım ömrü Taylor denklemi (Vc × T<sup>n</sup> = C) ile hesaplanır; karbür n = 0,25, HSS n = 0,125.
+          </p>
+        </section>
+
         <section aria-label="Veri yönetimi">
           <SectionHeading eyebrow="VERİ" title="Yedekleme" />
           <div className="overflow-hidden rounded-theme border border-border bg-card divide-y divide-border">
             <div className="px-4 py-3">
               <p className="text-sm font-semibold text-card-foreground">Cihazdaki veriler</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {history.length} hesap kaydı · {customMaterials.length} özel malzeme · {SEED_MATERIALS.length} hazır malzeme
+                {history.length} hesap kaydı · {customMaterials.length} özel malzeme · {tools.length} takım ·{' '}
+                {SEED_MATERIALS.length} hazır malzeme kalitesi
               </p>
             </div>
             <div className="flex gap-3 px-4 py-3">

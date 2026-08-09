@@ -27,8 +27,10 @@ export function AppProvider({ children }) {
       freze: { ...DEFAULT_DRAFTS.freze, ...(saved.freze || {}) },
       torna: { ...DEFAULT_DRAFTS.torna, ...(saved.torna || {}) },
       matkap: { ...DEFAULT_DRAFTS.matkap, ...(saved.matkap || {}) },
+      dis: { ...DEFAULT_DRAFTS.dis, ...(saved.dis || {}) },
     };
   });
+  const [tools, setTools] = useState(() => readJSON(KEYS.tools, []));
 
   useEffect(() => {
     writeJSON(KEYS.settings, settings);
@@ -48,6 +50,9 @@ export function AppProvider({ children }) {
   useEffect(() => {
     writeJSON(KEYS.drafts, drafts);
   }, [drafts]);
+  useEffect(() => {
+    writeJSON(KEYS.tools, tools);
+  }, [tools]);
 
   const materials = useMemo(() => [...SEED_MATERIALS, ...customMaterials], [customMaterials]);
 
@@ -121,6 +126,40 @@ export function AppProvider({ children }) {
 
   const clearHistory = useCallback(() => setHistory([]), []);
 
+  /* ------------------------------------------------------------- takımlar */
+  const saveTool = useCallback((tool) => {
+    const record = { ...tool };
+    if (!record.id) {
+      record.id = `takim-${uid()}`;
+      record.createdAt = new Date().toISOString();
+      record.usedMinutes = record.usedMinutes || 0;
+    }
+    setTools((prev) => {
+      const idx = prev.findIndex((t) => t.id === record.id);
+      if (idx === -1) return [...prev, record];
+      const next = [...prev];
+      next[idx] = { ...next[idx], ...record };
+      return next;
+    });
+    return record;
+  }, []);
+
+  const deleteTool = useCallback((id) => {
+    setTools((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const addToolUsage = useCallback((id, minutes) => {
+    setTools((prev) => prev.map((t) => (
+      t.id === id ? { ...t, usedMinutes: Math.max(0, (t.usedMinutes || 0) + Number(minutes || 0)) } : t
+    )));
+  }, []);
+
+  const resetToolUsage = useCallback((id) => {
+    setTools((prev) => prev.map((t) => (
+      t.id === id ? { ...t, usedMinutes: 0, edgeIndex: (t.edgeIndex || 1) + 1 } : t
+    )));
+  }, []);
+
   const replaceAll = useCallback((payload) => {
     if (payload.settings) {
       setSettings({
@@ -134,11 +173,13 @@ export function AppProvider({ children }) {
     if (Array.isArray(payload.favorites)) setFavorites(payload.favorites);
     if (Array.isArray(payload.customMaterials)) setCustomMaterials(payload.customMaterials);
     if (payload.activeMaterial) setActiveMaterialId(payload.activeMaterial);
+    if (Array.isArray(payload.tools)) setTools(payload.tools);
     if (payload.drafts) {
       setDrafts({
         freze: { ...DEFAULT_DRAFTS.freze, ...(payload.drafts.freze || {}) },
         torna: { ...DEFAULT_DRAFTS.torna, ...(payload.drafts.torna || {}) },
         matkap: { ...DEFAULT_DRAFTS.matkap, ...(payload.drafts.matkap || {}) },
+        dis: { ...DEFAULT_DRAFTS.dis, ...(payload.drafts.dis || {}) },
       });
     }
   }, []);
@@ -167,6 +208,11 @@ export function AppProvider({ children }) {
       drafts,
       updateDraft,
       resetDraft,
+      tools,
+      saveTool,
+      deleteTool,
+      addToolUsage,
+      resetToolUsage,
       replaceAll,
     }),
     [
@@ -174,6 +220,7 @@ export function AppProvider({ children }) {
       deleteHistory, clearHistory, favorites, toggleFavorite, materials, materialById,
       customMaterials, saveCustomMaterial, deleteCustomMaterial, activeMaterial,
       activeMaterialId, drafts, updateDraft, resetDraft, replaceAll,
+      tools, saveTool, deleteTool, addToolUsage, resetToolUsage,
     ],
   );
 

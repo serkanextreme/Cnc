@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import { useApp } from '../context/AppContext';
 import { MaterialPickerDrawer, MaterialSummaryCard } from '../components/talas/MaterialPicker';
 import { MachineLimitCard } from '../components/talas/MachineLimitCard';
+import { HardnessCard } from '../components/talas/HardnessCard';
+import { ToolLifeCard } from '../components/talas/ToolLifeCard';
 import { RecommendPanel } from '../components/talas/Recommend';
 import { FormulaPanel, ResultCard } from '../components/talas/ResultCard';
 import {
@@ -19,7 +21,7 @@ import {
   SectionHeading,
   SegmentedToggle,
 } from '../components/talas/Primitives';
-import { calcTurning, evaluateRange, worstStatus } from '../lib/calc';
+import { adjustForHardness, calcTurning, evaluateRange, worstStatus } from '../lib/calc';
 import { midOf, recommended, resolveLimits } from '../data/materials';
 import { buildShareText, shareText } from '../lib/records';
 import { formatNumber, formatQty, formatRange, unitLabel } from '../lib/units';
@@ -42,6 +44,10 @@ export default function Turning() {
   } = useApp();
   const [pickerOpen, setPickerOpen] = useState(false);
   const d = drafts.torna;
+  const material = useMemo(
+    () => (d.hardnessOverride > 0 ? adjustForHardness(activeMaterial, d.hardnessOverride) : activeMaterial),
+    [activeMaterial, d.hardnessOverride],
+  );
   const recordId = params.get('record');
 
   useEffect(() => {
@@ -54,7 +60,7 @@ export default function Turning() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
-  const rec = recommended(activeMaterial, 'torna', d.tool);
+  const rec = recommended(material, 'torna', d.tool);
   const limits = resolveLimits('torna', settings);
 
   const errors = useMemo(() => {
@@ -72,9 +78,9 @@ export default function Turning() {
     if (hasErrors) return null;
     return calcTurning({
       vc: d.vc, d: d.d, f: d.f, ap: d.ap, noseR: d.noseR,
-      kc: activeMaterial.kc, eta: settings.efficiency, limits, targetRa: d.targetRa,
+      kc: material.kc, eta: settings.efficiency, limits, targetRa: d.targetRa,
     });
-  }, [d, activeMaterial, settings.efficiency, limits, hasErrors]);
+  }, [d, material, settings.efficiency, limits, hasErrors]);
 
   const vcEval = rec ? evaluateRange(d.vc, rec.vc) : { status: 'neutral', label: '—' };
   const fEval = rec ? evaluateRange(d.f, rec.f) : { status: 'neutral', label: '—' };
@@ -137,6 +143,14 @@ export default function Turning() {
 
       <main className="space-y-6 px-5 pt-4">
         <MaterialSummaryCard material={activeMaterial} onChange={() => setPickerOpen(true)} />
+
+        <HardnessCard
+          op="torna"
+          material={activeMaterial}
+          adjusted={material}
+          value={d.hardnessOverride || 0}
+          onChange={(v) => updateDraft('torna', { hardnessOverride: v })}
+        />
 
         <section aria-labelledby="takim-baslik">
           <SectionHeading eyebrow="KURULUM" title="Takım ve parça" />
@@ -346,6 +360,16 @@ export default function Turning() {
             ]}
           />
         ) : null}
+
+        <ToolLifeCard
+          op="torna"
+          vc={d.vc}
+          vcRange={rec ? rec.vc : null}
+          tool={d.tool}
+          coolant={d.coolant || material.coolant}
+          cycleSeconds={result && result.cycleSeconds ? result.cycleSeconds : 0}
+          onApplyVc={(v) => updateDraft('torna', { vc: v })}
+        />
 
         <MachineLimitCard
           op="torna"

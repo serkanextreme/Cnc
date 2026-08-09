@@ -11,6 +11,7 @@ import {
   Settings2,
   ShieldCheck,
   TriangleAlert,
+  Wrench,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { parseNumber, toInputText, toMetric, unitLabel } from '../../lib/units';
@@ -368,7 +369,8 @@ export function EmptyState({ icon: Icon, title, body, action, testId = 'empty-st
 /* ------------------------------------------------------------ bottom bars */
 const TABS = [
   { id: 'hesapla', label: 'Hesapla', icon: Calculator, to: '/' },
-  { id: 'malzemeler', label: 'Malzemeler', icon: Layers3, to: '/malzemeler' },
+  { id: 'malzemeler', label: 'Malzeme', icon: Layers3, to: '/malzemeler' },
+  { id: 'takimlar', label: 'Takım', icon: Wrench, to: '/takimlar' },
   { id: 'gecmis', label: 'Geçmiş', icon: HistoryIcon, to: '/gecmis' },
   { id: 'ayarlar', label: 'Ayarlar', icon: Settings2, to: '/ayarlar' },
 ];
@@ -380,7 +382,7 @@ export function BottomTabBar({ active }) {
       className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background safe-bottom"
       data-testid="bottom-tab-bar"
     >
-      <div className="mx-auto flex h-[68px] w-full max-w-[430px] items-start justify-around px-3 pt-2">
+      <div className="mx-auto flex h-[68px] w-full max-w-[430px] items-start justify-around px-1 pt-2">
         {TABS.map((tab) => {
           const isActive = tab.id === active;
           const Icon = tab.icon;
@@ -391,7 +393,7 @@ export function BottomTabBar({ active }) {
               onClick={() => navigate(tab.to)}
               data-testid={`tab-${tab.id}`}
               aria-current={isActive ? 'page' : undefined}
-              className={`relative flex min-w-[70px] flex-col items-center gap-1 pt-1 transition-colors ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
+              className={`relative flex min-w-[58px] flex-col items-center gap-1 pt-1 transition-colors ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
             >
               {isActive ? <span className="absolute -top-2 h-0.5 w-9 bg-primary" /> : null}
               <Icon className="h-5 w-5" />

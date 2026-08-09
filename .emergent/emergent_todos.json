@@ -1,42 +1,34 @@
 [
   {
-    "content": "Phase 1: /app/test_core.py POC — hesap motoru, limit clamp, birim dönüşümü, 24 malzeme DB (92/92 geçti)",
+    "content": "Phase 3-A: 247 malzemelik ISO tabanlı katalog + sertliğe göre Vc düzeltme (grades_source.py + build_catalog.py)",
     "status": "completed"
   },
   {
-    "content": "Phase 1: Mockup sayılarıyla birebir doğrulama (3714/1188, 1146/252, 2546/407, 4.4sn)",
+    "content": "Phase 3-B: Diş tabloları (103 ölçü) + kılavuz/diş frezesi/torna diş çekme formülleri",
     "status": "completed"
   },
   {
-    "content": "Phase 1: materials_seed.json üret",
+    "content": "Phase 3-C: Takım ömrü (Taylor) + maliyet + aşınma uyarısı",
     "status": "completed"
   },
   {
-    "content": "Phase 2: design_agent blueprint (kullanıcı tokenları 1:1)",
+    "content": "Phase 3-D: test_core2.py POC — 116/116 test geçti",
     "status": "completed"
   },
   {
-    "content": "Phase 2: Bağımlılıklar + tasarım tokenları (fontsource, tailwind, index.css)",
+    "content": "Phase 3-E: Backend — /api/threads, /api/calc/kilavuz|dis-frezesi|dis-torna, /api/tool-life",
     "status": "completed"
   },
   {
-    "content": "Phase 2: Backend referans API (/api/catalog, /api/calc/*)",
+    "content": "Phase 3-F: Frontend — /dis ekranı (3 mod), ToolLifeCard, /takimlar (kullanım sayacı), HardnessCard",
     "status": "completed"
   },
   {
-    "content": "Phase 2: Frontend — calc engine, storage, 24 malzeme, 9 ekran",
+    "content": "Phase 3-G: Malzeme UI — ISO filtresi, standart araması, sertlik durumu ile canlı düzeltme",
     "status": "completed"
   },
   {
-    "content": "Phase 2: Offline PWA (manifest + service worker), CDN bağımlılığı sıfır — ağ kapalıyken çalıştığı doğrulandı",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2: Tüm user story'ler doğrulandı (14/14)",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2: testing_agent_v3 ile uçtan uca test (2 tur) + tüm bulunan hatalar düzeltildi",
-    "status": "completed"
+    "content": "Phase 3-H: testing_agent_v3 ile uçtan uca test + tüm hataların düzeltilmesi",
+    "status": "in_progress"
   }
 ]

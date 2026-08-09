@@ -178,3 +178,254 @@ def ipr_to_mmrev(v): return v * MM_PER_INCH
 def cm3_to_in3(v): return v / 16.387064
 def kw_to_hp(v): return v * 1.34102209
 def nm_to_lbft(v): return v * 0.7375621
+
+
+# =============================================================================
+# KILAVUZ / DIS ACMA
+# =============================================================================
+THREAD_HEIGHT_FACTOR = {60: 0.6134, 55: 0.6403}   # dis yuksekligi h3 = k * P (dis)
+INTERNAL_HEIGHT_FACTOR = 0.5413                    # H1 = 0.5413 * P (ic dis)
+
+
+def pitch_from_tpi(tpi: float) -> float:
+    return MM_PER_INCH / tpi
+
+
+def tap_drill_diameter(d: float, pitch: float, engagement: float = 75.0) -> float:
+    """Kilavuz matkap capi — klasik 'yuzde dis' formulu: D = d - (E * P) / 76.98"""
+    return d - (engagement * pitch) / 76.98
+
+
+def thread_minor_diameter(d: float, pitch: float) -> float:
+    """Ic dis dip capi (100% dis): D1 = d - 1.0825 * P"""
+    return d - 1.0825 * pitch
+
+
+def thread_pitch_diameter(d: float, pitch: float) -> float:
+    """Dis ortalama capi: d2 = d - 0.6495 * P"""
+    return d - 0.6495 * pitch
+
+
+def tapping_torque_nm(kc: float, pitch: float, d: float) -> float:
+    """Kesici kilavuz tork tahmini: M = kc * P * d / 8000 [Nm]"""
+    return (kc * pitch * d) / 8000.0
+
+
+def forming_tap_torque_nm(tensile: float, pitch: float, d: float) -> float:
+    """Ovalama (form) kilavuz tork tahmini: M = Kf * d * P^2 / 1000, Kf ~ 0.6 * Rm"""
+    kf = 0.6 * tensile
+    return (kf * d * pitch * pitch) / 1000.0
+
+
+def calc_tapping(vc, d, pitch, depth, kc, tensile=900.0, tap_type="kesici",
+                 engagement=75.0, eta=0.8, limits=None):
+    n = rpm_from_vc(vc, d)
+    vf = pitch * n
+    lim = apply_machine_limits(n, vf, d, limits or {})
+    n_f, vf_f = lim["n"], lim["vf"]
+    if tap_type == "yuvarlak":
+        m = forming_tap_torque_nm(tensile, pitch, d)
+    else:
+        m = tapping_torque_nm(kc, pitch, d)
+    power = (m * n_f) / 9550.0
+    turns = depth / pitch if pitch > 0 else 0
+    cycle = (2.0 * depth / vf_f) * 60.0 if vf_f > 0 else 0.0
+    return {
+        "n": n_f, "vf": vf_f, "vcEffective": lim["vcEffective"],
+        "torque": m, "power": power / eta if eta else power,
+        "tapDrill": tap_drill_diameter(d, pitch, engagement),
+        "minorDiameter": thread_minor_diameter(d, pitch),
+        "pitchDiameter": thread_pitch_diameter(d, pitch),
+        "turns": turns, "cycleSeconds": cycle,
+        "limits": lim,
+    }
+
+
+def calc_thread_milling(vc, tool_d, thread_d, pitch, z, fz, thread_length,
+                        kc, internal=True, eta=0.8, limits=None):
+    n = rpm_from_vc(vc, tool_d)
+    vf_periphery = fz * z * n
+    if internal:
+        if thread_d <= tool_d:
+            raise ValueError("Dis capi takim capindan buyuk olmali")
+        ratio = (thread_d - tool_d) / thread_d
+    else:
+        ratio = (thread_d + tool_d) / thread_d
+    vf_center = vf_periphery * ratio
+    lim = apply_machine_limits(n, vf_center, tool_d, limits or {})
+    revs = thread_length / pitch if pitch > 0 else 0
+    path_d = (thread_d - tool_d) if internal else (thread_d + tool_d)
+    path_len = PI * path_d * max(revs, 1e-9)
+    cycle = (path_len / lim["vf"]) * 60.0 if lim["vf"] > 0 else 0.0
+    depth = THREAD_HEIGHT_FACTOR[60] * pitch
+    q = mrr_milling(pitch, depth, lim["vf"])
+    power = power_kw(q, kc, eta)
+    return {
+        "n": lim["n"], "vf": lim["vf"], "vfPeriphery": vf_periphery,
+        "compensation": ratio, "vcEffective": lim["vcEffective"],
+        "revolutions": revs, "cycleSeconds": cycle,
+        "threadDepth": depth, "q": q, "power": power,
+        "torque": torque_nm(power, lim["n"]), "limits": lim,
+    }
+
+
+THREADING_PASS_TABLE = [
+    (0.5, 4), (0.7, 4), (0.75, 5), (0.8, 5), (1.0, 5), (1.25, 6), (1.5, 6),
+    (1.75, 7), (2.0, 8), (2.5, 9), (3.0, 10), (3.5, 11), (4.0, 12), (4.5, 13),
+    (5.0, 14), (5.5, 15), (6.0, 16),
+]
+MACH_PASS_FACTOR = {"kolay": 1.0, "orta": 1.1, "zor": 1.25, "cok-zor": 1.4}
+
+
+def threading_pass_count(pitch: float, machinability: str = "orta") -> int:
+    base = THREADING_PASS_TABLE[-1][1]
+    for p, count in THREADING_PASS_TABLE:
+        if pitch <= p + 1e-9:
+            base = count
+            break
+    return int(math.ceil(base * MACH_PASS_FACTOR.get(machinability, 1.1)))
+
+
+def threading_infeed_schedule(pitch: float, passes: int, angle: int = 60,
+                              internal: bool = False):
+    """Degresif (sabit talas alanli) paso plani: kumulatif derinlik = h * sqrt(i/N)"""
+    h = (INTERNAL_HEIGHT_FACTOR if internal else THREAD_HEIGHT_FACTOR.get(angle, 0.6134)) * pitch
+    schedule = []
+    prev = 0.0
+    for i in range(1, passes + 1):
+        cum = h * math.sqrt(i / passes)
+        schedule.append({"pass": i, "depth": cum - prev, "cumulative": cum})
+        prev = cum
+    return {"totalDepth": h, "passes": schedule}
+
+
+def calc_thread_turning(vc, d, pitch, length, kc, machinability="orta",
+                        angle=60, internal=False, eta=0.8, limits=None,
+                        approach=2.0, passes=None):
+    n = rpm_from_vc(vc, d)
+    vf = pitch * n
+    lim = apply_machine_limits(n, vf, d, limits or {})
+    count = passes or threading_pass_count(pitch, machinability)
+    plan = threading_infeed_schedule(pitch, count, angle, internal)
+    per_pass_s = ((length + approach) / lim["vf"]) * 60.0 if lim["vf"] > 0 else 0.0
+    total_s = per_pass_s * count * 1.6  # geri donus + bosta hareket payi
+    q = mrr_turning(plan["totalDepth"] / count, pitch, lim["vcEffective"])
+    power = power_kw(q, kc, eta)
+    return {
+        "n": lim["n"], "vf": lim["vf"], "vcEffective": lim["vcEffective"],
+        "passCount": count, "totalDepth": plan["totalDepth"],
+        "schedule": plan["passes"], "firstPass": plan["passes"][0]["depth"],
+        "lastPass": plan["passes"][-1]["depth"],
+        "cycleSeconds": total_s, "perPassSeconds": per_pass_s,
+        "q": q, "power": power, "torque": torque_nm(power, lim["n"]),
+        "limits": lim,
+    }
+
+
+# =============================================================================
+# TAKIM OMRU (Taylor) + MALIYET
+# =============================================================================
+TAYLOR_N = {"karbur": 0.25, "hss": 0.125, "seramik": 0.4, "cbn": 0.35}
+COOLANT_LIFE_FACTOR = {"sivi": 1.0, "yuksek-basinc": 1.15, "mist": 0.9, "kuru": 0.7}
+
+
+def tool_life_minutes(vc, vc_ref, tool="karbur", t_ref=15.0, coolant="sivi", n_exp=None):
+    """Taylor: Vc * T^n = C  ->  T = T_ref * (Vc_ref / Vc)^(1/n)"""
+    if vc <= 0 or vc_ref <= 0:
+        return 0.0
+    n = n_exp if n_exp else TAYLOR_N.get(tool, 0.25)
+    factor = COOLANT_LIFE_FACTOR.get(coolant, 1.0)
+    return t_ref * ((vc_ref / vc) ** (1.0 / n)) * factor
+
+
+def vc_for_target_life(target_life, vc_ref, tool="karbur", t_ref=15.0,
+                       coolant="sivi", n_exp=None):
+    if target_life <= 0:
+        return vc_ref
+    n = n_exp if n_exp else TAYLOR_N.get(tool, 0.25)
+    factor = COOLANT_LIFE_FACTOR.get(coolant, 1.0)
+    return vc_ref * ((t_ref * factor / target_life) ** n)
+
+
+def tool_cost(tool_price, edges, life_minutes, part_minutes, hourly_rate):
+    """Parca basi takim + tezgah maliyeti"""
+    edges = max(1, int(edges or 1))
+    cost_per_edge = (tool_price or 0) / edges
+    if life_minutes <= 0 or part_minutes <= 0:
+        return {
+            "costPerEdge": cost_per_edge, "partsPerEdge": 0,
+            "toolCostPerPart": 0.0, "machineCostPerPart": 0.0, "totalPerPart": 0.0,
+            "costPerMinute": 0.0,
+        }
+    parts_per_edge = life_minutes / part_minutes
+    tool_cost_part = cost_per_edge * (part_minutes / life_minutes)
+    machine_cost_part = (hourly_rate or 0) * part_minutes / 60.0
+    return {
+        "costPerEdge": cost_per_edge,
+        "partsPerEdge": parts_per_edge,
+        "toolCostPerPart": tool_cost_part,
+        "machineCostPerPart": machine_cost_part,
+        "totalPerPart": tool_cost_part + machine_cost_part,
+        "costPerMinute": cost_per_edge / life_minutes,
+    }
+
+
+def wear_status(life_minutes, warn=10.0, critical=5.0):
+    if life_minutes <= 0:
+        return "bilinmiyor"
+    if life_minutes < critical:
+        return "kritik"
+    if life_minutes < warn:
+        return "dikkat"
+    return "iyi"
+
+
+# =============================================================================
+# SERTLIGE GORE KESME VERISI DUZELTMESI
+# =============================================================================
+HRC_HB_TABLE = [
+    (20, 226), (22, 237), (24, 248), (26, 260), (28, 271), (30, 286), (32, 301),
+    (34, 317), (36, 333), (38, 352), (40, 371), (42, 390), (44, 409), (46, 432),
+    (48, 455), (50, 481), (52, 509), (54, 535), (56, 565), (58, 595), (60, 627),
+    (62, 659), (64, 695), (66, 731), (68, 770),
+]
+
+
+def hrc_to_hb(hrc: float) -> float:
+    if hrc <= HRC_HB_TABLE[0][0]:
+        return HRC_HB_TABLE[0][1]
+    if hrc >= HRC_HB_TABLE[-1][0]:
+        return HRC_HB_TABLE[-1][1]
+    for i in range(len(HRC_HB_TABLE) - 1):
+        a, b = HRC_HB_TABLE[i], HRC_HB_TABLE[i + 1]
+        if a[0] <= hrc <= b[0]:
+            t = (hrc - a[0]) / (b[0] - a[0])
+            return a[1] + t * (b[1] - a[1])
+    return HRC_HB_TABLE[-1][1]
+
+
+def to_hb(value: float, scale: str) -> float:
+    return hrc_to_hb(value) if scale == "HRC" else value
+
+
+def adjust_for_hardness(material: dict, new_hb: float) -> dict:
+    """Malzemenin Vc/ilerleme araliklarini ve kc'sini olculen sertlige gore olcekler."""
+    base = float(material.get("baseHB") or to_hb(sum(material["hardness"]) / 2.0, material["hardnessScale"]))
+    if not new_hb or new_hb <= 0 or abs(new_hb - base) < 1e-6:
+        return material
+    vc_f = min(max((base / new_hb) ** 0.6, 0.35), 1.9)
+    feed_f = min(max((base / new_hb) ** 0.25, 0.55), 1.45)
+    out = dict(material)
+    out["kc"] = int(round(material["kc"] * (new_hb / base) ** 0.35))
+    out["adjustedHB"] = new_hb
+    ops = {}
+    for op, tools in material["ops"].items():
+        feed_key = "fz" if op == "freze" else "f"
+        ops[op] = {}
+        for tool, data in tools.items():
+            ops[op][tool] = {
+                "vc": [max(3, round(data["vc"][0] * vc_f)), max(4, round(data["vc"][1] * vc_f))],
+                feed_key: [round(data[feed_key][0] * feed_f, 3), round(data[feed_key][1] * feed_f, 3)],
+            }
+    out["ops"] = ops
+    return out

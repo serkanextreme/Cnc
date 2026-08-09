@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import { useApp } from '../context/AppContext';
 import { MaterialPickerDrawer, MaterialSummaryCard } from '../components/talas/MaterialPicker';
 import { MachineLimitCard } from '../components/talas/MachineLimitCard';
+import { HardnessCard } from '../components/talas/HardnessCard';
+import { ToolLifeCard } from '../components/talas/ToolLifeCard';
 import { RecommendPanel } from '../components/talas/Recommend';
 import { FormulaPanel, ResultCard } from '../components/talas/ResultCard';
 import {
@@ -20,7 +22,7 @@ import {
   SegmentedToggle,
   Stepper,
 } from '../components/talas/Primitives';
-import { calcDrilling, evaluateRange, worstStatus } from '../lib/calc';
+import { adjustForHardness, calcDrilling, evaluateRange, worstStatus } from '../lib/calc';
 import { COOLANT_OPTIONS, coolantLabel, midOf, recommended, resolveLimits, TOOL_MATERIALS } from '../data/materials';
 import { buildShareText, shareText } from '../lib/records';
 import { formatNumber, formatQty, formatRange, formatSeconds, unitLabel } from '../lib/units';
@@ -34,6 +36,10 @@ export default function Drilling() {
   } = useApp();
   const [pickerOpen, setPickerOpen] = useState(false);
   const d = drafts.matkap;
+  const material = useMemo(
+    () => (d.hardnessOverride > 0 ? adjustForHardness(activeMaterial, d.hardnessOverride) : activeMaterial),
+    [activeMaterial, d.hardnessOverride],
+  );
   const recordId = params.get('record');
 
   useEffect(() => {
@@ -46,7 +52,7 @@ export default function Drilling() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
-  const rec = recommended(activeMaterial, 'matkap', d.tool);
+  const rec = recommended(material, 'matkap', d.tool);
   const limits = resolveLimits('matkap', settings);
 
   const errors = useMemo(() => {
@@ -63,9 +69,9 @@ export default function Drilling() {
     if (hasErrors) return null;
     return calcDrilling({
       vc: d.vc, d: d.d, f: d.f, depth: d.depth,
-      kc: activeMaterial.kc, eta: settings.efficiency, limits, peck: d.peck || 0,
+      kc: material.kc, eta: settings.efficiency, limits, peck: d.peck || 0,
     });
-  }, [d, activeMaterial, settings.efficiency, limits, hasErrors]);
+  }, [d, material, settings.efficiency, limits, hasErrors]);
 
   const vcEval = rec ? evaluateRange(d.vc, rec.vc) : { status: 'neutral', label: '—' };
   const fEval = rec ? evaluateRange(d.f, rec.f) : { status: 'neutral', label: '—' };
@@ -126,6 +132,14 @@ export default function Drilling() {
 
       <main className="space-y-6 px-5 pt-4">
         <MaterialSummaryCard material={activeMaterial} onChange={() => setPickerOpen(true)} />
+
+        <HardnessCard
+          op="matkap"
+          material={activeMaterial}
+          adjusted={material}
+          value={d.hardnessOverride || 0}
+          onChange={(v) => updateDraft('matkap', { hardnessOverride: v })}
+        />
 
         <section aria-labelledby="takim-baslik">
           <SectionHeading eyebrow="TAKIM" title="Matkap bilgisi" />
@@ -339,6 +353,16 @@ export default function Drilling() {
             ]}
           />
         ) : null}
+
+        <ToolLifeCard
+          op="matkap"
+          vc={d.vc}
+          vcRange={rec ? rec.vc : null}
+          tool={d.tool}
+          coolant={d.coolant || material.coolant}
+          cycleSeconds={result && result.cycleSeconds ? result.cycleSeconds : 0}
+          onApplyVc={(v) => updateDraft('matkap', { vc: v })}
+        />
 
         <MachineLimitCard
           op="matkap"

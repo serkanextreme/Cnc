@@ -9,6 +9,8 @@ import Drilling from './pages/Drilling';
 import Materials from './pages/Materials';
 import MaterialDetail from './pages/MaterialDetail';
 import MaterialForm from './pages/MaterialForm';
+import Threading from './pages/Threading';
+import Tools from './pages/Tools';
 import HistoryPage from './pages/History';
 import SettingsPage from './pages/Settings';
 
@@ -21,6 +23,8 @@ export default function App() {
           <Route path="/freze" element={<Milling />} />
           <Route path="/torna" element={<Turning />} />
           <Route path="/matkap" element={<Drilling />} />
+          <Route path="/dis" element={<Threading />} />
+          <Route path="/takimlar" element={<Tools />} />
           <Route path="/malzemeler" element={<Materials />} />
           <Route path="/malzeme/yeni" element={<MaterialForm />} />
           <Route path="/malzeme/:id/duzenle" element={<MaterialForm />} />

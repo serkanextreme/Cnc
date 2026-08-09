@@ -13,7 +13,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useApp } from '../context/AppContext';
-import { midOf, groupLabel, machinabilityLabel, machinabilityTone, recommended, TOOL_MATERIALS } from '../data/materials';
+import {
+  groupLabel, isoLabel, machinabilityLabel, machinabilityTone, midOf, recommended, TOOL_MATERIALS,
+} from '../data/materials';
 import {
   BottomActionBar,
   Eyebrow,
@@ -142,6 +144,36 @@ export default function MaterialDetail() {
                 <p className="mt-1 text-sm font-semibold text-card-foreground">{material.kc} N/mm²</p>
               </div>
             </div>
+            <div className="col-span-2 grid grid-cols-2 border-t border-border">
+              <div className="border-r border-border px-4 py-3">
+                <Eyebrow>ISO grubu</Eyebrow>
+                <p className="mt-1 text-sm font-semibold text-card-foreground" data-testid="detail-iso">
+                  {isoLabel(material.isoGroup)}
+                </p>
+              </div>
+              <div className="px-4 py-3">
+                <Eyebrow>Sertlik (HB eşdeğeri)</Eyebrow>
+                <p className="mt-1 text-sm font-semibold text-card-foreground">{material.baseHB || '—'} HB</p>
+              </div>
+            </div>
+            {material.standards && material.standards.length ? (
+              <div className="col-span-2 border-t border-border px-4 py-3">
+                <Eyebrow className="mb-2">Standart karşılıkları</Eyebrow>
+                <div className="flex flex-wrap gap-2" data-testid="detail-standards">
+                  {material.standards.map((st) => (
+                    <span
+                      key={st}
+                      className="rounded-theme border border-accent/40 bg-accent/10 px-2.5 py-1.5 text-[11px] font-semibold text-accent"
+                    >
+                      {st}
+                    </span>
+                  ))}
+                </div>
+                {material.subgroupLabel ? (
+                  <p className="mt-2 text-[11px] text-muted-foreground">{material.subgroupLabel}</p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </section>
 
