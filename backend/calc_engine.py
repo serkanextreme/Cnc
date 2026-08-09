@@ -521,3 +521,34 @@ def calc_chatter_free(vc, d, z, fz_target, ap, ae, kc, flute_length=None,
         "warnings": warnings,
         "limits": lim,
     }
+
+
+# =============================================================================
+# TROKOIDAL / PEEL KANAL ACMA
+# =============================================================================
+def calc_trochoidal_slot(width, length, depth, d, ae, ap, vf, q=0.0,
+                         rapid_factor=0.15):
+    """Kanal genisligine gore trokoidal paso sayisi ve toplam sure."""
+    if d <= 0 or ae <= 0 or ap <= 0:
+        raise ValueError("Cap, ae ve ap sifirdan buyuk olmali")
+    if width < d:
+        raise ValueError("Kanal genisligi takim capindan kucuk olamaz")
+    radial_passes = int(math.ceil((width - d) / ae)) + 1
+    axial_layers = int(math.ceil(depth / ap)) if depth > 0 else 1
+    total_passes = radial_passes * axial_layers
+    path_len = total_passes * length
+    cut_min = (path_len / vf) if vf > 0 else 0.0
+    total_min = cut_min * (1.0 + rapid_factor)
+    volume_cm3 = (width * depth * length) / 1000.0
+    vol_min = (volume_cm3 / q) if q > 0 else 0.0
+    return {
+        "radialPasses": radial_passes,
+        "axialLayers": axial_layers,
+        "totalPasses": total_passes,
+        "pathLength": path_len,
+        "cuttingMinutes": cut_min,
+        "totalMinutes": total_min,
+        "volumeCm3": volume_cm3,
+        "volumeMinutes": vol_min,
+        "effectiveMrr": (volume_cm3 / cut_min) if cut_min > 0 else 0.0,
+    }

@@ -257,3 +257,21 @@ duvar helisiyle kesiyorsun… Chatter Free diye bölüm aç, oradan hesaplama ya
 - testing_agent_v3 (4. tur): **Backend 25/25 (%100)**, frontend çekirdek hesaplar POC ile birebir
 - Düzeltilen gerçek hata: geçmişten "yeniden aç" `/chatter` rotasına gidiyordu → `opRoute()` ile `/chatter-free` düzeltildi
 - POC toplamı: **92 + 116 + 55 = 263 test, hepsi geçiyor**
+
+---
+
+## PHASE 5 — Trokoidal Kanal + Mikrofonla Titreşim Dinleme
+
+### Trokoidal kanal (POC ✅ `/app/test_core4.py` — 16/16)
+- Radyal paso = ceil((kanal genişliği − takım çapı) / ae) + 1 · Eksenel kat = ceil(derinlik / ap)
+- Toplam takım yolu = toplam paso × kanal boyu · süre = yol / Vf + %15 boşta hareket payı
+- Kaldırılan hacim (cm³), efektif MRR; kanal genişliği < takım çapı ise hata
+- Örnek: kanal 20 mm · takım Ø12 · ae 1,2 → 8 radyal paso, 800 mm yol, 40 cm³; derinlik 45 mm → 3 kat, 48 paso
+- Chatter-Free ekranına "TROKOİDAL KANAL" bölümü olarak eklendi (canlı, girişler drafta kaydedilir)
+
+### Mikrofonla titreşim dinleme (deneysel)
+- Web Audio API + AnalyserNode (FFT 8192) ile 150–5.000 Hz aralığındaki baskın tepe bulunur
+- "Dinlemeye başla" → izin → canlı Hz + seviye çubuğu → "Bu frekansı kullan" ile chatter frekansı alanına yazılır
+  ve kararlı devir önerileri (n = 60·fc/(z·(k+1))) otomatik güncellenir
+- İzin verilmezse / tarayıcı desteklemezse kullanıcıya net hata mesajı gösterilir; hesaplama akışı etkilenmez
+- NOT: Mikrofon donanım gerektirdiği için otomatik test kapsamı dışındadır; gerçek telefonda denenmelidir

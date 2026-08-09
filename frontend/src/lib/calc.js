@@ -511,3 +511,25 @@ export function calcChatterFree({ vc, d, z, fzTarget, ap, ae, kc = 2100, fluteLe
     limits: lim,
   };
 }
+
+/* ============ TROKOİDAL / PEEL KANAL AÇMA ============ */
+export function calcTrochoidalSlot({ width, length, depth, d, ae, ap, vf, q = 0, rapidFactor = 0.15 }) {
+  if (!(d > 0) || !(ae > 0) || !(ap > 0) || !(width >= d) || !(length > 0)) return null;
+  const radialPasses = Math.ceil((width - d) / ae) + 1;
+  const axialLayers = depth > 0 ? Math.ceil(depth / ap) : 1;
+  const totalPasses = radialPasses * axialLayers;
+  const pathLength = totalPasses * length;
+  const cuttingMinutes = vf > 0 ? pathLength / vf : 0;
+  const volumeCm3 = (width * depth * length) / 1000;
+  return {
+    radialPasses,
+    axialLayers,
+    totalPasses,
+    pathLength,
+    cuttingMinutes,
+    totalMinutes: cuttingMinutes * (1 + rapidFactor),
+    volumeCm3,
+    volumeMinutes: q > 0 ? volumeCm3 / q : 0,
+    effectiveMrr: cuttingMinutes > 0 ? volumeCm3 / cuttingMinutes : 0,
+  };
+}

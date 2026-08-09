@@ -14,10 +14,11 @@ import {
   BottomActionBar, ClampNotice, Eyebrow, GhostButton, IconButton, NumericField,
   PrimaryButton, ScreenHeader, ScreenShell, SectionHeading, SegmentedToggle, StatusChip, Stepper,
 } from '../components/talas/Primitives';
-import { adjustForHardness, calcChatterFree, evaluateRange, HEM_AE_PRESETS } from '../lib/calc';
+import { adjustForHardness, calcChatterFree, calcTrochoidalSlot, evaluateRange, HEM_AE_PRESETS } from '../lib/calc';
+import { ChatterListener } from '../components/talas/ChatterListener';
 import { midOf, recommended, resolveLimits, TOOL_MATERIALS } from '../data/materials';
 import { buildShareText, shareText } from '../lib/records';
-import { formatNumber, formatQty, formatRange, unitLabel } from '../lib/units';
+import { formatNumber, formatQty, formatRange, formatSeconds, unitLabel } from '../lib/units';
 
 export default function ChatterFree() {
   const navigate = useNavigate();
@@ -69,6 +70,14 @@ export default function ChatterFree() {
       limits, vcFactor: d.vcFactor || 1, chatterHz: d.chatterHz || 0,
     });
   }, [d, material, settings.efficiency, limits, hasErrors]);
+
+  const slot = useMemo(() => {
+    if (!result) return null;
+    return calcTrochoidalSlot({
+      width: d.slotWidth, length: d.slotLength, depth: d.slotDepth,
+      d: d.d, ae: d.ae, ap: d.ap, vf: result.vf, q: result.q,
+    });
+  }, [result, d.slotWidth, d.slotLength, d.slotDepth, d.d, d.ae, d.ap]);
 
   const vcEval = rec ? evaluateRange(d.vc, rec.vc) : { status: 'neutral', label: '—' };
   const fzEval = rec ? evaluateRange(d.fz, rec.fz) : { status: 'neutral', label: '—' };
@@ -318,6 +327,81 @@ export default function ChatterFree() {
           </section>
         ) : null}
 
+        <section aria-label="Trokoidal kanal" data-testid="slot-card">
+          <SectionHeading
+            eyebrow="TROKOİDAL KANAL"
+            title="Kanal planı ve süre"
+            right={slot ? <StatusChip tone="accent">{slot.totalPasses} paso</StatusChip> : null}
+          />
+          <div className="overflow-hidden rounded-theme border border-border bg-card divide-y divide-border">
+            <div className="grid grid-cols-2 divide-x divide-border">
+              <NumericField
+                id="cf-sw" label="Kanal genişliği" kind="length" value={d.slotWidth}
+                onChange={(v) => updateDraft('chatter', { slotWidth: v })}
+                status={d.slotWidth < d.d ? 'error' : 'neutral'}
+                error={d.slotWidth < d.d ? 'Kanal genişliği takım çapından küçük olamaz' : undefined}
+                testId="input-slot-width"
+              />
+              <NumericField
+                id="cf-sl" label="Kanal boyu" kind="length" value={d.slotLength}
+                onChange={(v) => updateDraft('chatter', { slotLength: v })}
+                testId="input-slot-length"
+              />
+            </div>
+            <NumericField
+              id="cf-sd" label="Kanal derinliği" kind="length" value={d.slotDepth}
+              onChange={(v) => updateDraft('chatter', { slotDepth: v })}
+              hint={`Dalma ${formatQty('length', d.ap, unitSystem)} ${unitLabel('length', unitSystem)} → kat sayısı otomatik`}
+              testId="input-slot-depth"
+            />
+            {slot ? (
+              <>
+                <div className="grid grid-cols-2 divide-x divide-border">
+                  <div className="px-4 py-4">
+                    <Eyebrow>Radyal paso</Eyebrow>
+                    <p className="num-xl mt-1 text-primary" data-testid="slot-radial">{slot.radialPasses}</p>
+                    <p className="mt-1 text-xs font-semibold text-card-foreground">yan adım × {formatQty('length', d.ae, unitSystem)}</p>
+                  </div>
+                  <div className="px-4 py-4">
+                    <Eyebrow>Eksenel kat</Eyebrow>
+                    <p className="num-xl mt-1 text-foreground" data-testid="slot-layers">{slot.axialLayers}</p>
+                    <p className="mt-1 text-xs font-semibold text-card-foreground">toplam {slot.totalPasses} paso</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <Eyebrow>Toplam takım yolu</Eyebrow>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{slot.totalPasses} × {formatQty('length', d.slotLength, unitSystem)} {unitLabel('length', unitSystem)}</p>
+                  </div>
+                  <p className="num-md shrink-0 text-accent" data-testid="slot-path">
+                    {formatNumber(slot.pathLength, 0)} mm
+                  </p>
+                </div>
+                <div className="flex items-center justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <Eyebrow>Tahmini süre</Eyebrow>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Kesme {formatSeconds(slot.cuttingMinutes * 60)} + %15 boşta hareket
+                    </p>
+                  </div>
+                  <p className="num-lg shrink-0 text-primary" data-testid="slot-time">
+                    {formatSeconds(slot.totalMinutes * 60)}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <Eyebrow>Kaldırılan hacim</Eyebrow>
+                    <p className="mt-0.5 text-xs text-muted-foreground">Efektif MRR {formatNumber(slot.effectiveMrr, 1)} cm³/dk</p>
+                  </div>
+                  <p className="num-md shrink-0 text-foreground" data-testid="slot-volume">
+                    {formatNumber(slot.volumeCm3, 1)} cm³
+                  </p>
+                </div>
+              </>
+            ) : null}
+          </div>
+        </section>
+
         <section aria-label="Titreşim" data-testid="chatter-card">
           <SectionHeading
             eyebrow="TİTREŞİM"
@@ -342,6 +426,9 @@ export default function ChatterFree() {
               onChange={(v) => updateDraft('chatter', { chatterHz: Math.max(0, v) })}
               testId="input-chatter-hz"
             />
+            <div className="px-4 py-3">
+              <ChatterListener onDetect={(hz) => updateDraft('chatter', { chatterHz: hz })} />
+            </div>
             {result && result.chatterSpeeds.length ? (
               <div className="px-4 py-3">
                 <Eyebrow className="mb-2">Kararlı devir önerileri · n = 60·fc / (z·(k+1))</Eyebrow>

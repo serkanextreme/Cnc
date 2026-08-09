@@ -152,6 +152,7 @@ export const DEFAULT_DRAFTS = {
   chatter: {
     tool: 'karbur', d: 12, z: 4, fluteLength: 20, ap: 20, ae: 1.2,
     vc: 140, fz: 0.08, vcFactor: 1.2, chatterHz: 0, hardnessOverride: 0,
+    slotWidth: 20, slotLength: 100, slotDepth: 20,
   },
 };
 
