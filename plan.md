@@ -277,3 +277,16 @@ duvar helisiyle kesiyorsun… Chatter Free diye bölüm aç, oradan hesaplama ya
 - NOT: Mikrofon donanım gerektirdiği için otomatik test kapsamı dışındadır; gerçek telefonda denenmelidir
 
 ### Phase 5 Test ✅ testing_agent_v3: 21/21 geçti, hata yok. POC toplamı: 92 + 116 + 55 + 16 = 279 test
+
+---
+
+## PHASE 6 — Mobil uygulamaya hazırlık (iOS öncelikli)
+- `safe-top` yardımcı sınıfı: iPhone çentik/durum çubuğu altında kalma sorunu için tüm ekran başlıklarına `env(safe-area-inset-top)` payı
+- Dokunma davranışı: `-webkit-tap-highlight-color: transparent`, `touch-action: manipulation` (çift dokunuş zoom'u yok),
+  buton/etikette metin seçimi kapalı, inputlarda seçim açık, `-webkit-text-size-adjust: 100%`
+- manifest.json: `id`, `display_override: [standalone, fullscreen, minimal-ui]` eklendi (kurulabilirlik)
+- Ana ekranda platforma göre **"Telefona uygulama olarak kur"** ipucu (iOS'ta Safari → Paylaş → Ana Ekrana Ekle;
+  Android'de menüden Uygulamayı yükle) — "Anladım, gizle" ile kalıcı kapatılır
+- Doğrulama: manifest/sw/icon-192/apple-touch-icon 200 döndü, hesaplar bozulmadı (Freze 3.714), ipucu kapatma kalıcı
+- NOT: Mağaza (App Store / Google Play) yayını için Emergent Mobile Agent (Expo/React Native) akışı gerekir; bu web/PWA
+  sürümü referans ve saha kullanımı için hazırdır.

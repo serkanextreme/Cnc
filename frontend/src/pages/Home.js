@@ -9,6 +9,7 @@ import {
   Ruler,
   RotateCw,
   Settings2,
+  Smartphone,
   WifiOff,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -37,6 +38,20 @@ export default function Home() {
 
   const recent = useMemo(() => history.slice(0, 3), [history]);
 
+  const showInstallHint = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const standalone = window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true;
+    if (standalone) return false;
+    try {
+      return window.localStorage.getItem('talas.v1.installHintClosed') !== '1';
+    } catch (e) {
+      return true;
+    }
+  }, []);
+  const [hintOpen, setHintOpen] = useState(showInstallHint);
+  const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+
   return (
     <ScreenShell>
       <ScreenHeader
@@ -64,6 +79,36 @@ export default function Home() {
       </ScreenHeader>
 
       <main className="px-5 pt-4">
+        {hintOpen ? (
+          <div
+            className="mb-4 rounded-theme border border-primary/50 bg-primary/10 px-4 py-3"
+            data-testid="install-hint"
+          >
+            <div className="flex items-start gap-3">
+              <Smartphone className="mt-0.5 h-[18px] w-[18px] shrink-0 text-primary" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground">Telefona uygulama olarak kur</p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  {isIOS
+                    ? 'Safari’de alttaki Paylaş simgesine dokun → “Ana Ekrana Ekle”. Sonrasında tam ekran açılır ve internetsiz çalışır.'
+                    : 'Tarayıcı menüsünden “Uygulamayı yükle / Ana ekrana ekle” seçeneğine dokun. Sonrasında tam ekran açılır ve internetsiz çalışır.'}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    try { window.localStorage.setItem('talas.v1.installHintClosed', '1'); } catch (e) { /* yoksay */ }
+                    setHintOpen(false);
+                  }}
+                  data-testid="close-install-hint"
+                  className="mt-2 text-xs font-semibold text-primary"
+                >
+                  Anladım, gizle
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         <MaterialSummaryCard material={activeMaterial} onChange={() => setPickerOpen(true)} />
 
         <section className="mt-5" aria-labelledby="islem-baslik">

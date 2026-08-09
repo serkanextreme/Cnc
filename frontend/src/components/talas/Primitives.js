@@ -61,7 +61,7 @@ export function ScreenHeader({
 }) {
   return (
     <header
-      className="border-b border-border bg-background px-5 pb-4 pt-8"
+      className="safe-top border-b border-border bg-background px-5 pb-4"
       data-testid={testId}
     >
       <div className="flex items-center gap-3">
