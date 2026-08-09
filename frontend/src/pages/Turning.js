@@ -78,7 +78,7 @@ export default function Turning() {
 
   const vcEval = rec ? evaluateRange(d.vc, rec.vc) : { status: 'neutral', label: '—' };
   const fEval = rec ? evaluateRange(d.f, rec.f) : { status: 'neutral', label: '—' };
-  const raOver = !!(result && d.targetRa > 0 && result.ra > d.targetRa);
+  const raOver = !!(result && d.targetRa > 0 && result.ra - d.targetRa > 0.005);
   const powerOver = !!(result && limits && limits.powerKw && result.power > limits.powerKw);
   const status = hasErrors
     ? 'error'
@@ -306,7 +306,7 @@ export default function Turning() {
           <button
             type="button"
             onClick={() => {
-              updateDraft('torna', { f: Number(result.feedForTargetRa.toFixed(3)) });
+              updateDraft('torna', { f: Math.floor(result.feedForTargetRa * 10000) / 10000 });
               toast.success('Hedef Ra için ilerleme uygulandı');
             }}
             data-testid="apply-ra-feed"

@@ -12,7 +12,7 @@ import { formatRange } from '../../lib/units';
 import { Eyebrow, Row, StatusChip } from './Primitives';
 
 /** Aktif malzeme özet kartı — mockup'taki "Malzeme / Değiştir" satırı */
-export function MaterialSummaryCard({ material, onChange, testId = 'material-summary' }) {
+export function MaterialSummaryCard({ material, onChange, testId = 'active-material-card' }) {
   if (!material) return null;
   return (
     <section
