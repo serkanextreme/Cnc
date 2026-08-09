@@ -1,0 +1,27 @@
+{
+  "theme": "dark-only",
+  "colors": {
+    "background": "#111719", "foreground": "#F3F7F5",
+    "card": "#182123", "cardForeground": "#F3F7F5",
+    "muted": "#1D292B", "mutedForeground": "#B5C3C2",
+    "border": "#344346", "input": "#202C2E",
+    "primary": "#F4B942", "primaryForeground": "#17201F",
+    "secondary": "#236B6A", "secondaryForeground": "#F4FAF9",
+    "accent": "#55C6C3", "accentForeground": "#102120",
+    "destructive": "#E7685C", "destructiveForeground": "#FFFFFF",
+    "success": "#5DBB87", "successForeground": "#102218",
+    "chart": ["#F4B942", "#55C6C3", "#6FA8E8", "#5DBB87", "#D784B5"]
+  },
+  "radius": 10,
+  "fonts": {
+    "heading": "Barlow Condensed (uppercase, bold, tracking-tight — tüm başlıklar ve sayısal sonuçlar)",
+    "body": "IBM Plex Sans"
+  },
+  "layout": {
+    "contentMaxWidth": 430,
+    "horizontalPadding": 20,
+    "bottomTabHeight": 68,
+    "numberFormat": "tr-TR (binlik '.', ondalık ',')"
+  },
+  "expoFontPackages": ["@expo-google-fonts/barlow-condensed", "@expo-google-fonts/ibm-plex-sans"]
+}
