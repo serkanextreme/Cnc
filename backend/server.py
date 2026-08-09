@@ -1,72 +1,193 @@
-from fastapi import FastAPI, APIRouter
-from dotenv import load_dotenv
-from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
-import os
-import logging
-from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
-import uuid
-from datetime import datetime, timezone
+"""
+Talas — CNC Kesme Parametreleri | Referans API
 
+Uygulama tamamen offline calisir (tum hesaplar ve veriler cihazda tutulur).
+Bu backend, ayni dogrulanmis hesap motorunu ve malzeme katalogunu HTTP uzerinden
+sunan bir REFERANS/DOGRULAMA API'sidir. Uygulamanin calismasi icin ZORUNLU DEGILDIR.
+"""
+import json
+import logging
+import os
+from pathlib import Path
+from typing import Dict, List, Optional
+
+from dotenv import load_dotenv
+from fastapi import APIRouter, FastAPI, HTTPException
+from motor.motor_asyncio import AsyncIOMotorClient
+from pydantic import BaseModel, ConfigDict, Field
+from starlette.middleware.cors import CORSMiddleware
+
+import calc_engine as ce
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db = client[os.environ.get('DB_NAME', 'talas')]
 
-# Create the main app without a prefix
-app = FastAPI()
+with open(ROOT_DIR / 'materials.json', encoding='utf-8') as fh:
+    CATALOG = json.load(fh)
 
-# Create a router with the /api prefix
+MATERIALS: List[dict] = CATALOG['materials']
+MATERIAL_BY_ID: Dict[str, dict] = {m['id']: m for m in MATERIALS}
+PRESETS: Dict[str, dict] = CATALOG['machinePresets']
+
+app = FastAPI(title="Talas CNC API", version="1.0.0")
 api_router = APIRouter(prefix="/api")
 
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-    
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+# ------------------------------------------------------------------ modeller
+class Limits(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    maxRpm: Optional[float] = None
+    maxFeed: Optional[float] = None
+    powerKw: Optional[float] = None
 
-# Add your routes to the router instead of directly to app
+
+class MillingRequest(BaseModel):
+    vc: float = Field(..., gt=0, description="Kesme hizi m/dk")
+    d: float = Field(..., gt=0, description="Takim capi mm")
+    z: int = Field(..., ge=1, description="Agiz sayisi")
+    fz: float = Field(..., gt=0, description="Dis basina ilerleme mm/dis")
+    ap: float = Field(..., gt=0, description="Eksenel derinlik mm")
+    ae: float = Field(..., gt=0, description="Radyal genislik mm")
+    kc: float = Field(2100, gt=0, description="Ozgul kesme kuvveti N/mm2")
+    eta: float = Field(0.8, gt=0, le=1)
+    limits: Optional[Limits] = None
+
+
+class TurningRequest(BaseModel):
+    vc: float = Field(..., gt=0)
+    d: float = Field(..., gt=0, description="Is parcasi capi mm")
+    f: float = Field(..., gt=0, description="Ilerleme mm/dev")
+    ap: float = Field(..., gt=0, description="Talas derinligi mm")
+    noseR: float = Field(0.8, gt=0, description="Uc radyusu mm")
+    kc: float = Field(2100, gt=0)
+    eta: float = Field(0.8, gt=0, le=1)
+    targetRa: Optional[float] = Field(None, gt=0, description="Hedef Ra um")
+    limits: Optional[Limits] = None
+
+
+class DrillingRequest(BaseModel):
+    vc: float = Field(..., gt=0)
+    d: float = Field(..., gt=0, description="Matkap capi mm")
+    f: float = Field(..., gt=0, description="Ilerleme mm/dev")
+    depth: float = Field(..., gt=0, description="Delik derinligi mm")
+    kc: float = Field(2100, gt=0)
+    eta: float = Field(0.8, gt=0, le=1)
+    peck: int = Field(0, ge=0)
+    limits: Optional[Limits] = None
+
+
+def _limits(payload: Optional[Limits]) -> dict:
+    if not payload:
+        return {}
+    return {k: v for k, v in payload.model_dump().items() if v}
+
+
+# ------------------------------------------------------------------ rotalar
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {
+        "app": "Talas — CNC Kesme Parametreleri",
+        "mode": "offline-first (bu API referans amaclidir)",
+        "materials": len(MATERIALS),
+        "endpoints": ["/api/health", "/api/catalog", "/api/materials",
+                      "/api/materials/{id}", "/api/machine-presets",
+                      "/api/calc/freze", "/api/calc/torna", "/api/calc/matkap"],
+    }
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
-    
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
-    
-    return status_checks
+@api_router.get("/health")
+async def health():
+    mongo_ok = True
+    try:
+        await client.admin.command('ping')
+    except Exception as exc:  # pragma: no cover
+        logger.warning("mongo ping failed: %s", exc)
+        mongo_ok = False
+    return {"status": "ok", "mongo": mongo_ok, "materials": len(MATERIALS)}
 
-# Include the router in the main app
+
+@api_router.get("/catalog")
+async def catalog():
+    """Frontend'in de kullandigi tam katalog (gruplar, presetler, malzemeler)."""
+    return CATALOG
+
+
+@api_router.get("/materials")
+async def list_materials(q: Optional[str] = None, group: Optional[str] = None,
+                         machinability: Optional[str] = None):
+    items = MATERIALS
+    if group:
+        items = [m for m in items if m['group'] == group]
+    if machinability:
+        items = [m for m in items if m['machinability'] == machinability]
+    if q:
+        needle = q.strip().lower()
+        items = [m for m in items
+                 if needle in m['code'].lower()
+                 or needle in m['name'].lower()
+                 or needle in m.get('subtitle', '').lower()]
+    return {"count": len(items), "items": items}
+
+
+@api_router.get("/materials/{material_id}")
+async def get_material(material_id: str):
+    mat = MATERIAL_BY_ID.get(material_id)
+    if not mat:
+        raise HTTPException(status_code=404, detail="Malzeme bulunamadi")
+    return mat
+
+
+@api_router.get("/machine-presets")
+async def machine_presets():
+    return {"presets": PRESETS, "auto": CATALOG['autoPreset']}
+
+
+@api_router.post("/calc/freze")
+async def calc_freze(req: MillingRequest):
+    try:
+        res = ce.calc_milling(req.vc, req.d, req.z, req.fz, req.ap, req.ae,
+                              req.kc, req.eta, _limits(req.limits))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    res["formulas"] = ["n = (1000 × Vc) / (π × D)", "Vf = fz × z × n",
+                       "Q = ap × ae × Vf", "Pc = Q × kc / 60000 / η",
+                       "M = 30000 × Pc / (π × n)"]
+    return res
+
+
+@api_router.post("/calc/torna")
+async def calc_torna(req: TurningRequest):
+    try:
+        res = ce.calc_turning(req.vc, req.d, req.f, req.ap, req.noseR,
+                              req.kc, req.eta, _limits(req.limits), req.targetRa)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    res["formulas"] = ["n = (1000 × Vc) / (π × D)", "Vf = f × n",
+                       "Q = ap × f × Vc", "Ra = f² / (32 × rε)",
+                       "f = √(32 × Ra × rε)"]
+    return res
+
+
+@api_router.post("/calc/matkap")
+async def calc_matkap(req: DrillingRequest):
+    try:
+        res = ce.calc_drilling(req.vc, req.d, req.f, req.depth,
+                               req.kc, req.eta, _limits(req.limits), req.peck)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    res["formulas"] = ["n = (1000 × Vc) / (π × D)", "Vf = f × n",
+                       "Q = (π × D² / 4) × Vf", "t = derinlik / Vf"]
+    return res
+
+
 app.include_router(api_router)
 
 app.add_middleware(
@@ -77,12 +198,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

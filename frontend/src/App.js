@@ -1,56 +1,47 @@
-import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
-import { HOME } from "@/constants/testIds";
+import React from 'react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import { AppProvider } from './context/AppContext';
+import Home from './pages/Home';
+import Milling from './pages/Milling';
+import Turning from './pages/Turning';
+import Drilling from './pages/Drilling';
+import Materials from './pages/Materials';
+import MaterialDetail from './pages/MaterialDetail';
+import MaterialForm from './pages/MaterialForm';
+import HistoryPage from './pages/History';
+import SettingsPage from './pages/Settings';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
-
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
+export default function App() {
   return (
-    <div>
-      <header className="App-header">
-        <a
-          data-testid={HOME.emergentLink}
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
-
-function App() {
-  return (
-    <div className="App">
+    <AppProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
+          <Route path="/" element={<Home />} />
+          <Route path="/freze" element={<Milling />} />
+          <Route path="/torna" element={<Turning />} />
+          <Route path="/matkap" element={<Drilling />} />
+          <Route path="/malzemeler" element={<Materials />} />
+          <Route path="/malzeme/yeni" element={<MaterialForm />} />
+          <Route path="/malzeme/:id/duzenle" element={<MaterialForm />} />
+          <Route path="/malzemeler/:id" element={<MaterialDetail />} />
+          <Route path="/gecmis" element={<HistoryPage />} />
+          <Route path="/ayarlar" element={<SettingsPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
-    </div>
+      <Toaster
+        position="top-center"
+        theme="dark"
+        toastOptions={{
+          style: {
+            background: '#182123',
+            border: '1px solid #344346',
+            color: '#F3F7F5',
+            fontFamily: '"IBM Plex Sans", system-ui, sans-serif',
+          },
+        }}
+      />
+    </AppProvider>
   );
 }
-
-export default App;

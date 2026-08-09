@@ -137,3 +137,34 @@ Steps
 - Machine limit works with default preset + checkbox enabling manual entry; clamp is clearly indicated.
 - Unit system toggle updates inputs/ranges/results/history correctly.
 - App is installable PWA and fully usable with **no internet** (no CDN).
+---
+
+## DURUM GÜNCELLEMESİ (Phase 1 & 2 tamamlandı)
+
+### Phase 1 — Core POC ✅ TAMAMLANDI
+- `/app/test_core.py` — **92/92 test geçti** (ilk çalıştırmada)
+- Mockup sayıları birebir doğrulandı: Freze 3.714 dev/dk · 1.188 mm/dk | Torna 1.146 · 252 | Matkap 2.546 · 407 · 4,4 sn | Geçmiş 9.947 ve 1.592
+- Q/MRR, güç (kW), tork (Nm), Ra + ters çözüm (hedef Ra → f), talaş incelmesi (hm), kavrama açısı doğrulandı
+- Tezgâh limiti clamp + clamp sonrası efektif Vc doğrulandı; mm/dev korunuyor
+- Metrik ↔ İmperial (inç/SFM/IPR/IPM/in³/HP/lb-ft) tur-dönüş testleri geçti
+- 24 malzeme DB bütünlüğü: 9 grup, her malzemede karbür+HSS × freze/torna/matkap, kc değerleri, HRC 20–68 kontrolü
+- `/app/materials_seed.json` üretildi
+
+### Phase 2 — Uygulama ✅ TAMAMLANDI
+Backend (referans API, uygulama için zorunlu değil):
+- `/app/backend/calc_engine.py` (POC motorunun birebir kopyası), `/app/backend/materials.json`
+- `/api/health`, `/api/catalog`, `/api/materials`, `/api/materials/{id}`, `/api/machine-presets`, `/api/calc/freze|torna|matkap`
+
+Frontend (offline-first PWA, React + Tailwind):
+- Tasarım tokenları kullanıcının ZIP'inden birebir alındı (index.css + tailwind.config.js, `rounded-theme`, Barlow Condensed + IBM Plex Sans **paket içi** fontlar)
+- CDN bağımlılığı YOK: Iconify → lucide-react, Google Fonts → @fontsource, Tailwind CDN → yerel build
+- `public/manifest.json` + `public/sw.js` (network-first + cache fallback) → ana ekrana kurulabilir, internetsiz açılır (SW aktif doğrulandı)
+- `src/lib/calc.js` (motor), `src/lib/units.js` (birim + TR biçim), `src/lib/storage.js` (localStorage), `src/lib/records.js` (geçmiş/paylaşım)
+- `src/data/materials.json|js` — 24 malzeme + 9 grup + 7 tezgâh preseti + soğutma seçenekleri
+- `src/context/AppContext.js` — ayarlar, geçmiş, favoriler, özel malzemeler, aktif malzeme, taslaklar (hepsi cihazda)
+- Ekranlar: Hesapla, Freze, Torna, Matkap, Malzemeler, Malzeme Detayı, Malzeme Ekle/Düzenle, Geçmiş, Ayarlar
+- Tezgâh limiti: switch + otomatik preset (varsayılan) + "Manuel değer gir" **kutusu** (kapalıyken alanlar devre dışı)
+- Birim sistemi: Metrik (varsayılan) ⇄ İnç/SFM/IPM — tüm giriş, aralık ve sonuçlar dönüşüyor
+
+### Sıradaki
+- Phase 2 kapanışı: testing_agent_v3 ile uçtan uca test + bulunan tüm hataların düzeltilmesi
