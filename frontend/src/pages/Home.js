@@ -25,6 +25,7 @@ import {
   StatusChip,
 } from '../components/talas/Primitives';
 import { describeRecord } from '../lib/records';
+import { opRoute } from '../data/materials';
 import { formatNumber, formatQty, unitLabel } from '../lib/units';
 
 const OP_ICONS = { freze: CircleDotDashed, torna: RotateCw, matkap: Drill, dis: Bolt, chatter: AudioWaveform };
@@ -226,7 +227,7 @@ export default function Home() {
                       </>
                     }
                     subtitle={`${formatNumber(rec.outputs.n, 0)} ${unitLabel('rpm', unitSystem)} · ${formatQty('vf', rec.outputs.vf, unitSystem)} ${unitLabel('vf', unitSystem)}`}
-                    onClick={() => navigate(`/${rec.op}?record=${rec.id}`)}
+                    onClick={() => navigate(`${opRoute(rec.op)}?record=${rec.id}`)}
                     chevron
                     testId={`recent-${rec.id}`}
                   />

@@ -1,34 +1,26 @@
 [
   {
-    "content": "Phase 3-A: 247 malzemelik ISO tabanlı katalog + sertliğe göre Vc düzeltme",
+    "content": "Phase 4: Chatter-free / HEM teknolojisi araştırması (RCTF, ae %5-15, diş geçiş frekansı, chatter lobları) — web kaynaklarıyla doğrulandı",
     "status": "completed"
   },
   {
-    "content": "Phase 3-B: Diş tabloları (103 ölçü) + kılavuz/diş frezesi/torna diş çekme formülleri",
+    "content": "Phase 4: Hesap motoru (backend + frontend) + /api/calc/chatter-free",
     "status": "completed"
   },
   {
-    "content": "Phase 3-C: Takım ömrü (Taylor) + maliyet + aşınma uyarısı",
+    "content": "Phase 4: test_core3.py POC — 55/55 test geçti (telafi kimliği hm = hedef fz dahil)",
     "status": "completed"
   },
   {
-    "content": "Phase 3-D: POC doğrulaması — test_core.py 92/92 + test_core2.py 116/116",
+    "content": "Phase 4: /chatter-free ekranı (helis boyu=dalma, ae presetleri, kazanç kartı, titreşim kartı)",
     "status": "completed"
   },
   {
-    "content": "Phase 3-E: Backend — /api/threads, /api/calc/kilavuz|dis-frezesi|dis-torna, /api/tool-life",
+    "content": "Phase 4: Ana ekran kartı, geçmiş kaydı/filtresi, sertlik+ömür+limit kartları entegrasyonu",
     "status": "completed"
   },
   {
-    "content": "Phase 3-F: Frontend — /dis ekranı (3 mod), ToolLifeCard, /takimlar, HardnessCard",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 3-G: Malzeme UI — ISO filtresi, standart araması, canlı sertlik düzeltmesi",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 3-H: testing_agent_v3 testi (frontend %100, backend 65/66) + bulunan hata düzeltildi",
+    "content": "Phase 4: testing_agent_v3 testi (backend 25/25) + 'yeniden aç' rota hatası düzeltildi",
     "status": "completed"
   }
 ]

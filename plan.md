@@ -223,3 +223,37 @@ Frontend:
 - testing_agent_v3 (3. tur): **Frontend %100** (14/14 Phase 3 user story + regresyon), **Backend 65/66**
 - Düzeltilen hata: `/api/materials?q=` aramasının standart karşılıklarını (SCM440, Hardox, TS EN …) taramaması — düzeltildi, doğrulandı
 - Regresyon: Freze 3.714/1.188 · Torna 1.146/252/Ra 1,89 · Matkap 2.546/407/4,4 sn değerleri korunuyor; 4140 hâlâ Vc 120–160
+
+---
+
+## PHASE 4 — CHATTER-FREE / HEM (Yüksek Verimli Frezeleme)
+
+Kullanıcı isteği: "chatter free kesme teknolojisi… kesicinin helisi 20 mm ise 20 mm kadar dalıyorsun, takımın yan
+duvar helisiyle kesiyorsun… Chatter Free diye bölüm aç, oradan hesaplama yapılsın."
+
+### Araştırma (web) ile doğrulanan formüller
+- Radyal talaş incelme faktörü **RCTF = 1 / √(1 − (1 − 2·ae/D)²)** → programlanan **fz = hedef fz × RCTF**
+- HEM önerilen radyal kavrama **%5–15 × D**, eksenel derinlik **kesici (helis) boyu / 1–2×D**
+- Diş geçiş frekansı **f = n × z / 60**; chatter kaçınma **n = 60·fc / (z·(k+1))** (lob k)
+- Değişken helis (variable helix) kesiciler kararlı bölgeyi genişletir
+
+### POC ✅ `/app/test_core3.py` — 55/55 test geçti
+- RCTF: ae=D/2 → 1,000 · %10 → 1,6667 · %8 → 1,8430 · %5 → 2,2942 (monoton)
+- **Telafi kimliği:** her ae değerinde gerçek talaş kalınlığı hm = hedef fz (0,080) — telafinin doğruluk kanıtı
+- D12·z4·ap20·ae1,2: n 3.714 · fz_prog 0,1333 · Vf 1.981 · Q 47,53 cm³/dk · kavrama 36,87° · 247,6 Hz
+- Kenar kullanımı 3,33× · klasik (ap=ae=D/2) karşılaştırması · uyarılar (ap>helis, ap>3D, ae>%20, ae<%3)
+- Chatter lobları: fc 900 Hz, z4 → 13.500 / 6.750 / 4.500 / 3.375 dev/dk; önerilen devirde f_tp = fc/2
+
+### Uygulama ✅
+- Backend: `calc_chatter_free`, `rctf`, `tooth_passing_frequency`, `chatter_free_spindle_speeds` + `POST /api/calc/chatter-free`
+- Frontend `/chatter-free` **Chatter-Free** ekranı: HEM açıklaması, kesici/helis boyu (girilince ap otomatik eşitlenir),
+  ae yüzde presetleri (%3/5/8/10/15), Vc artış faktörü, canlı sonuçlar (RCTF, programlanan fz, gerçek hm, Q, kW, tork,
+  kavrama açısı), **Kazanç kartı** (klasik frezelemeye göre MRR ve süre — negatif kazanç da dürüstçe gösterilir),
+  **Titreşim kartı** (diş geçiş frekansı + ölçülen chatter frekansından kararlı devir önerileri, tek dokunuşla uygula),
+  sertlik düzeltmesi + takım ömrü/maliyet + tezgâh limiti kartları, uyarı listesi, formül paneli
+- Ana ekranda "Chatter-Free" kartı; geçmişte kayıt/filtre/yeniden açma desteği
+
+### Test ✅
+- testing_agent_v3 (4. tur): **Backend 25/25 (%100)**, frontend çekirdek hesaplar POC ile birebir
+- Düzeltilen gerçek hata: geçmişten "yeniden aç" `/chatter` rotasına gidiyordu → `opRoute()` ile `/chatter-free` düzeltildi
+- POC toplamı: **92 + 116 + 55 = 263 test, hepsi geçiyor**

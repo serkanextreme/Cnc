@@ -24,6 +24,7 @@ import {
   ScreenShell,
 } from '../components/talas/Primitives';
 import { buildShareText, describeRecord, groupByDay, shareText, todayStats } from '../lib/records';
+import { opRoute } from '../data/materials';
 import { formatNumber, formatQty, unitLabel } from '../lib/units';
 
 const OP_ICONS = { freze: CircleDotDashed, torna: RotateCw, matkap: Drill, dis: Bolt, chatter: AudioWaveform };
@@ -173,7 +174,7 @@ export default function HistoryPage() {
                               <div className="mt-3 flex items-center gap-4">
                                 <button
                                   type="button"
-                                  onClick={() => navigate(`/${rec.op}?record=${rec.id}`)}
+                                  onClick={() => navigate(`${opRoute(rec.op)}?record=${rec.id}`)}
                                   data-testid={`reopen-${rec.id}`}
                                   className="flex items-center gap-1.5 text-xs font-semibold text-primary"
                                 >
