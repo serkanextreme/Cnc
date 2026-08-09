@@ -1,0 +1,42 @@
+[
+  {
+    "content": "Phase 1: /app/test_core.py POC — hesap motoru (n, Vf, Q, kW, tork, Ra, çevrim süresi), limit clamp, birim dönüşümü, 24 malzeme DB bütünlüğü",
+    "status": "in_progress"
+  },
+  {
+    "content": "Phase 1: POC'u çalıştır ve mockup sayıları (3714/1188, 1146/252, 2546/407, 4.4sn) ile birebir eşleşene kadar düzelt",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 1: materials_seed.json üret ve frontend'e taşınacak formatı doğrula",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: design_agent — kullanıcının kendi tasarım tokenlarını 1:1 koruyan blueprint",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: Bağımlılıklar (fontsource, offline PWA) ve tasarım tokenlarının Tailwind/CSS'e taşınması",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: Backend — referans API (malzemeler + hesap motoru, /api prefix)",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: Frontend — calc engine, storage, 24 malzeme DB, tüm ekranlar (Hesapla, Freze, Torna, Matkap, Malzemeler, Detay, Geçmiş, Ayarlar)",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: Offline PWA (manifest + service worker), CDN bağımlılığı sıfır",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: Tüm user story'lerin karşılandığının doğrulanması",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: testing_agent_v3 ile uçtan uca test ve bulunan tüm hataların düzeltilmesi",
+    "status": "pending"
+  }
+]

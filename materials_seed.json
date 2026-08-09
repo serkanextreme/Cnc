@@ -1,0 +1,2349 @@
+{
+ "version": 1,
+ "groups": [
+  {
+   "id": "celik",
+   "label": "Karbon ve alasimli celikler",
+   "icon": "anvil"
+  },
+  {
+   "id": "takim-celigi",
+   "label": "Takim celikleri",
+   "icon": "hammer"
+  },
+  {
+   "id": "paslanmaz",
+   "label": "Paslanmaz celikler",
+   "icon": "shield-check"
+  },
+  {
+   "id": "aluminyum",
+   "label": "Aluminyum alasimlari",
+   "icon": "triangle"
+  },
+  {
+   "id": "dokme-demir",
+   "label": "Dokme demirler",
+   "icon": "circle"
+  },
+  {
+   "id": "pirinc-bronz",
+   "label": "Pirinc ve bronzlar",
+   "icon": "coins"
+  },
+  {
+   "id": "titanyum",
+   "label": "Titanyum alasimlari",
+   "icon": "atom"
+  },
+  {
+   "id": "nikel",
+   "label": "Nikel alasimlari",
+   "icon": "flame"
+  },
+  {
+   "id": "plastik",
+   "label": "Plastik muhendislik malzemeleri",
+   "icon": "component"
+  }
+ ],
+ "machinePresets": {
+  "vmc_std": {
+   "label": "CNC Dik Isleme Merkezi (Standart)",
+   "max_rpm": 8000,
+   "max_feed": 10000,
+   "power_kw": 7.5
+  },
+  "vmc_fast": {
+   "label": "CNC Dik Isleme Merkezi (Hizli)",
+   "max_rpm": 12000,
+   "max_feed": 15000,
+   "power_kw": 11.0
+  },
+  "vmc_hsm": {
+   "label": "HSM / Yuksek Devir Merkezi",
+   "max_rpm": 24000,
+   "max_feed": 20000,
+   "power_kw": 15.0
+  },
+  "lathe_cnc": {
+   "label": "CNC Torna",
+   "max_rpm": 4000,
+   "max_feed": 8000,
+   "power_kw": 11.0
+  },
+  "lathe_conv": {
+   "label": "Universal (Konvansiyonel) Torna",
+   "max_rpm": 2000,
+   "max_feed": 2000,
+   "power_kw": 5.5
+  },
+  "mill_conv": {
+   "label": "Konvansiyonel Freze",
+   "max_rpm": 2000,
+   "max_feed": 1500,
+   "power_kw": 4.0
+  },
+  "drill_press": {
+   "label": "Matkap Tezgahi",
+   "max_rpm": 3000,
+   "max_feed": 1200,
+   "power_kw": 2.2
+  }
+ },
+ "materials": [
+  {
+   "id": "4140",
+   "code": "4140",
+   "name": "Islah Celigi",
+   "group": "celik",
+   "subtitle": "42CrMo4",
+   "hardness": [
+    28,
+    32
+   ],
+   "hardnessScale": "HRC",
+   "tensile": [
+    850,
+    950
+   ],
+   "kc": 2100,
+   "machinability": "orta",
+   "accent": "primary",
+   "desc": "Krom-molibdenli, islah islemli yapi celigi",
+   "tags": [
+    "Islah celigi",
+    "Krom-molibden",
+    "Orta islenebilirlik"
+   ],
+   "coolant": "Sogutma Sivisi",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       120,
+       160
+      ],
+      "fz": [
+       0.05,
+       0.12
+      ]
+     },
+     "hss": {
+      "vc": [
+       25,
+       40
+      ],
+      "fz": [
+       0.03,
+       0.07
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       160,
+       210
+      ],
+      "f": [
+       0.15,
+       0.3
+      ]
+     },
+     "hss": {
+      "vc": [
+       30,
+       45
+      ],
+      "f": [
+       0.1,
+       0.2
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       70,
+       100
+      ],
+      "f": [
+       0.12,
+       0.2
+      ]
+     },
+     "hss": {
+      "vc": [
+       18,
+       28
+      ],
+      "f": [
+       0.08,
+       0.15
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "c45---ck45",
+   "code": "C45 / Ck45",
+   "name": "Karbon Celigi",
+   "group": "celik",
+   "subtitle": "1.0503",
+   "hardness": [
+    170,
+    210
+   ],
+   "hardnessScale": "HB",
+   "tensile": [
+    600,
+    750
+   ],
+   "kc": 1800,
+   "machinability": "kolay",
+   "accent": "accent",
+   "desc": "Orta karbonlu, genel amacli imalat celigi",
+   "tags": [
+    "Karbon celigi",
+    "Genel amacli",
+    "Iyi islenebilirlik"
+   ],
+   "coolant": "Sogutma Sivisi",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       140,
+       200
+      ],
+      "fz": [
+       0.06,
+       0.15
+      ]
+     },
+     "hss": {
+      "vc": [
+       28,
+       45
+      ],
+      "fz": [
+       0.04,
+       0.09
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       180,
+       260
+      ],
+      "f": [
+       0.15,
+       0.4
+      ]
+     },
+     "hss": {
+      "vc": [
+       35,
+       55
+      ],
+      "f": [
+       0.12,
+       0.25
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       80,
+       120
+      ],
+      "f": [
+       0.15,
+       0.25
+      ]
+     },
+     "hss": {
+      "vc": [
+       22,
+       32
+      ],
+      "f": [
+       0.1,
+       0.18
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "1045",
+   "code": "1045",
+   "name": "Karbon Celigi",
+   "group": "celik",
+   "subtitle": "AISI 1045",
+   "hardness": [
+    180,
+    220
+   ],
+   "hardnessScale": "HB",
+   "tensile": [
+    620,
+    780
+   ],
+   "kc": 1850,
+   "machinability": "kolay",
+   "accent": "accent",
+   "desc": "Orta karbonlu celik, mil ve dinamik parcalar",
+   "tags": [
+    "Karbon celigi",
+    "Mil malzemesi"
+   ],
+   "coolant": "Sogutma Sivisi",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       130,
+       190
+      ],
+      "fz": [
+       0.06,
+       0.14
+      ]
+     },
+     "hss": {
+      "vc": [
+       26,
+       42
+      ],
+      "fz": [
+       0.04,
+       0.08
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       170,
+       250
+      ],
+      "f": [
+       0.15,
+       0.38
+      ]
+     },
+     "hss": {
+      "vc": [
+       32,
+       50
+      ],
+      "f": [
+       0.12,
+       0.24
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       75,
+       115
+      ],
+      "f": [
+       0.14,
+       0.24
+      ]
+     },
+     "hss": {
+      "vc": [
+       20,
+       30
+      ],
+      "f": [
+       0.1,
+       0.17
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "1020",
+   "code": "1020",
+   "name": "Dusuk Karbonlu Celik",
+   "group": "celik",
+   "subtitle": "AISI 1020",
+   "hardness": [
+    110,
+    150
+   ],
+   "hardnessScale": "HB",
+   "tensile": [
+    400,
+    550
+   ],
+   "kc": 1600,
+   "machinability": "kolay",
+   "accent": "accent",
+   "desc": "Sunek, kaynaga uygun dusuk karbonlu celik",
+   "tags": [
+    "Dusuk karbon",
+    "Kolay islenir",
+    "Kaynaklanabilir"
+   ],
+   "coolant": "Sogutma Sivisi",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       150,
+       220
+      ],
+      "fz": [
+       0.08,
+       0.18
+      ]
+     },
+     "hss": {
+      "vc": [
+       30,
+       50
+      ],
+      "fz": [
+       0.05,
+       0.1
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       200,
+       300
+      ],
+      "f": [
+       0.2,
+       0.45
+      ]
+     },
+     "hss": {
+      "vc": [
+       40,
+       60
+      ],
+      "f": [
+       0.15,
+       0.3
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       90,
+       130
+      ],
+      "f": [
+       0.18,
+       0.28
+      ]
+     },
+     "hss": {
+      "vc": [
+       25,
+       35
+      ],
+      "f": [
+       0.12,
+       0.2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "4340",
+   "code": "4340",
+   "name": "Yuksek Mukavemetli Alasim",
+   "group": "celik",
+   "subtitle": "34CrNiMo6",
+   "hardness": [
+    32,
+    38
+   ],
+   "hardnessScale": "HRC",
+   "tensile": [
+    1000,
+    1200
+   ],
+   "kc": 2350,
+   "machinability": "zor",
+   "accent": "chart5",
+   "desc": "Nikel-krom-molibdenli yuksek mukavemetli celik",
+   "tags": [
+    "Yuksek mukavemet",
+    "Ni-Cr-Mo",
+    "Zor islenir"
+   ],
+   "coolant": "Yuksek Basincli Sogutma",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       90,
+       130
+      ],
+      "fz": [
+       0.04,
+       0.1
+      ]
+     },
+     "hss": {
+      "vc": [
+       18,
+       30
+      ],
+      "fz": [
+       0.02,
+       0.05
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       120,
+       170
+      ],
+      "f": [
+       0.12,
+       0.25
+      ]
+     },
+     "hss": {
+      "vc": [
+       22,
+       35
+      ],
+      "f": [
+       0.08,
+       0.16
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       50,
+       80
+      ],
+      "f": [
+       0.1,
+       0.16
+      ]
+     },
+     "hss": {
+      "vc": [
+       12,
+       20
+      ],
+      "f": [
+       0.06,
+       0.12
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "8620",
+   "code": "8620",
+   "name": "Sementasyon Celigi",
+   "group": "celik",
+   "subtitle": "21NiCrMo2",
+   "hardness": [
+    150,
+    200
+   ],
+   "hardnessScale": "HB",
+   "tensile": [
+    550,
+    750
+   ],
+   "kc": 1900,
+   "machinability": "orta",
+   "accent": "primary",
+   "desc": "Yuzey sertlestirmeye uygun dusuk alasimli celik",
+   "tags": [
+    "Sementasyon",
+    "Disli malzemesi"
+   ],
+   "coolant": "Sogutma Sivisi",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       120,
+       170
+      ],
+      "fz": [
+       0.06,
+       0.13
+      ]
+     },
+     "hss": {
+      "vc": [
+       25,
+       40
+      ],
+      "fz": [
+       0.04,
+       0.08
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       160,
+       230
+      ],
+      "f": [
+       0.15,
+       0.32
+      ]
+     },
+     "hss": {
+      "vc": [
+       30,
+       48
+      ],
+      "f": [
+       0.12,
+       0.22
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       70,
+       105
+      ],
+      "f": [
+       0.13,
+       0.22
+      ]
+     },
+     "hss": {
+      "vc": [
+       20,
+       30
+      ],
+      "f": [
+       0.09,
+       0.16
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "d2",
+   "code": "D2",
+   "name": "Soguk Is Takim Celigi",
+   "group": "takim-celigi",
+   "subtitle": "1.2379",
+   "hardness": [
+    55,
+    62
+   ],
+   "hardnessScale": "HRC",
+   "tensile": [
+    1600,
+    2000
+   ],
+   "kc": 2900,
+   "machinability": "cok-zor",
+   "accent": "destructive",
+   "desc": "Yuksek kromlu, asinmaya dayanikli soguk is celigi",
+   "tags": [
+    "Sert malzeme",
+    "Asinma direnci",
+    "Cok zor islenir"
+   ],
+   "coolant": "Yuksek Basincli Sogutma",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       50,
+       80
+      ],
+      "fz": [
+       0.03,
+       0.07
+      ]
+     },
+     "hss": {
+      "vc": [
+       10,
+       18
+      ],
+      "fz": [
+       0.015,
+       0.035
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       60,
+       100
+      ],
+      "f": [
+       0.08,
+       0.18
+      ]
+     },
+     "hss": {
+      "vc": [
+       12,
+       20
+      ],
+      "f": [
+       0.05,
+       0.1
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       25,
+       45
+      ],
+      "f": [
+       0.06,
+       0.12
+      ]
+     },
+     "hss": {
+      "vc": [
+       8,
+       14
+      ],
+      "f": [
+       0.04,
+       0.08
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "h13",
+   "code": "H13",
+   "name": "Sicak Is Takim Celigi",
+   "group": "takim-celigi",
+   "subtitle": "1.2344",
+   "hardness": [
+    44,
+    52
+   ],
+   "hardnessScale": "HRC",
+   "tensile": [
+    1400,
+    1700
+   ],
+   "kc": 2700,
+   "machinability": "zor",
+   "accent": "destructive",
+   "desc": "Kalip ve sicak is uygulamalari icin krom esasli celik",
+   "tags": [
+    "Kalip celigi",
+    "Sicak is",
+    "Zor islenir"
+   ],
+   "coolant": "Yuksek Basincli Sogutma",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       60,
+       100
+      ],
+      "fz": [
+       0.035,
+       0.08
+      ]
+     },
+     "hss": {
+      "vc": [
+       12,
+       20
+      ],
+      "fz": [
+       0.02,
+       0.04
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       80,
+       130
+      ],
+      "f": [
+       0.1,
+       0.22
+      ]
+     },
+     "hss": {
+      "vc": [
+       15,
+       25
+      ],
+      "f": [
+       0.06,
+       0.12
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       35,
+       55
+      ],
+      "f": [
+       0.08,
+       0.14
+      ]
+     },
+     "hss": {
+      "vc": [
+       10,
+       16
+      ],
+      "f": [
+       0.05,
+       0.09
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "m2-hss",
+   "code": "M2 HSS",
+   "name": "Hiz Celigi",
+   "group": "takim-celigi",
+   "subtitle": "1.3343",
+   "hardness": [
+    62,
+    65
+   ],
+   "hardnessScale": "HRC",
+   "tensile": [
+    1900,
+    2200
+   ],
+   "kc": 3100,
+   "machinability": "cok-zor",
+   "accent": "destructive",
+   "desc": "Yuksek hiz celigi, tungsten-molibden alasimli",
+   "tags": [
+    "HSS",
+    "Cok sert",
+    "Taslama tercih edilir"
+   ],
+   "coolant": "Yuksek Basincli Sogutma",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       40,
+       70
+      ],
+      "fz": [
+       0.025,
+       0.06
+      ]
+     },
+     "hss": {
+      "vc": [
+       8,
+       14
+      ],
+      "fz": [
+       0.01,
+       0.03
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       50,
+       85
+      ],
+      "f": [
+       0.06,
+       0.15
+      ]
+     },
+     "hss": {
+      "vc": [
+       10,
+       16
+      ],
+      "f": [
+       0.04,
+       0.09
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       20,
+       35
+      ],
+      "f": [
+       0.05,
+       0.1
+      ]
+     },
+     "hss": {
+      "vc": [
+       6,
+       12
+      ],
+      "f": [
+       0.03,
+       0.07
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "304",
+   "code": "304",
+   "name": "Paslanmaz Celik",
+   "group": "paslanmaz",
+   "subtitle": "Ostenitik / X5CrNi18-10",
+   "hardness": [
+    170,
+    200
+   ],
+   "hardnessScale": "HB",
+   "tensile": [
+    500,
+    700
+   ],
+   "kc": 2400,
+   "machinability": "zor",
+   "accent": "chart3",
+   "desc": "Ostenitik paslanmaz celik, is sertlesmesi egilimli",
+   "tags": [
+    "Paslanmaz",
+    "Ostenitik",
+    "Is sertlesmesi"
+   ],
+   "coolant": "Bol Sogutma Sivisi",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       80,
+       130
+      ],
+      "fz": [
+       0.05,
+       0.12
+      ]
+     },
+     "hss": {
+      "vc": [
+       15,
+       25
+      ],
+      "fz": [
+       0.03,
+       0.06
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       120,
+       180
+      ],
+      "f": [
+       0.15,
+       0.3
+      ]
+     },
+     "hss": {
+      "vc": [
+       20,
+       35
+      ],
+      "f": [
+       0.1,
+       0.2
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       40,
+       70
+      ],
+      "f": [
+       0.1,
+       0.18
+      ]
+     },
+     "hss": {
+      "vc": [
+       10,
+       18
+      ],
+      "f": [
+       0.06,
+       0.12
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "316l",
+   "code": "316L",
+   "name": "Paslanmaz Celik",
+   "group": "paslanmaz",
+   "subtitle": "Ostenitik / X2CrNiMo17-12-2",
+   "hardness": [
+    170,
+    210
+   ],
+   "hardnessScale": "HB",
+   "tensile": [
+    490,
+    690
+   ],
+   "kc": 2500,
+   "machinability": "zor",
+   "accent": "chart3",
+   "desc": "Molibdenli, korozyona dayanikli paslanmaz celik",
+   "tags": [
+    "Paslanmaz",
+    "Molibdenli",
+    "Yapiskan talas"
+   ],
+   "coolant": "Bol Sogutma Sivisi",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       70,
+       120
+      ],
+      "fz": [
+       0.05,
+       0.11
+      ]
+     },
+     "hss": {
+      "vc": [
+       14,
+       24
+      ],
+      "fz": [
+       0.03,
+       0.055
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       110,
+       170
+      ],
+      "f": [
+       0.14,
+       0.28
+      ]
+     },
+     "hss": {
+      "vc": [
+       18,
+       32
+      ],
+      "f": [
+       0.1,
+       0.18
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       35,
+       65
+      ],
+      "f": [
+       0.09,
+       0.16
+      ]
+     },
+     "hss": {
+      "vc": [
+       9,
+       16
+      ],
+      "f": [
+       0.05,
+       0.11
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "17-4-ph",
+   "code": "17-4 PH",
+   "name": "Cokelme Sertlesmeli Paslanmaz",
+   "group": "paslanmaz",
+   "subtitle": "1.4542 / H900",
+   "hardness": [
+    35,
+    44
+   ],
+   "hardnessScale": "HRC",
+   "tensile": [
+    1000,
+    1300
+   ],
+   "kc": 2650,
+   "machinability": "zor",
+   "accent": "chart3",
+   "desc": "Cokelme ile sertlesen yuksek mukavemetli paslanmaz",
+   "tags": [
+    "Paslanmaz",
+    "Cokelme sertlesmesi",
+    "Havacilik"
+   ],
+   "coolant": "Yuksek Basincli Sogutma",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       60,
+       100
+      ],
+      "fz": [
+       0.04,
+       0.09
+      ]
+     },
+     "hss": {
+      "vc": [
+       12,
+       20
+      ],
+      "fz": [
+       0.02,
+       0.045
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       90,
+       140
+      ],
+      "f": [
+       0.12,
+       0.25
+      ]
+     },
+     "hss": {
+      "vc": [
+       15,
+       26
+      ],
+      "f": [
+       0.08,
+       0.16
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       30,
+       55
+      ],
+      "f": [
+       0.08,
+       0.14
+      ]
+     },
+     "hss": {
+      "vc": [
+       8,
+       14
+      ],
+      "f": [
+       0.05,
+       0.1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "6061-t6",
+   "code": "6061-T6",
+   "name": "Aluminyum Alasimi",
+   "group": "aluminyum",
+   "subtitle": "AlMg1SiCu",
+   "hardness": [
+    95,
+    95
+   ],
+   "hardnessScale": "HB",
+   "tensile": [
+    290,
+    330
+   ],
+   "kc": 700,
+   "machinability": "kolay",
+   "accent": "success",
+   "desc": "Genel amacli, iyi islenebilir aluminyum alasimi",
+   "tags": [
+    "Aluminyum",
+    "Kolay islenir",
+    "Yapisma riski"
+   ],
+   "coolant": "Hava / Mist",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       300,
+       600
+      ],
+      "fz": [
+       0.08,
+       0.25
+      ]
+     },
+     "hss": {
+      "vc": [
+       90,
+       180
+      ],
+      "fz": [
+       0.05,
+       0.15
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       350,
+       700
+      ],
+      "f": [
+       0.1,
+       0.4
+      ]
+     },
+     "hss": {
+      "vc": [
+       100,
+       200
+      ],
+      "f": [
+       0.08,
+       0.25
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       120,
+       250
+      ],
+      "f": [
+       0.15,
+       0.35
+      ]
+     },
+     "hss": {
+      "vc": [
+       50,
+       90
+      ],
+      "f": [
+       0.1,
+       0.25
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "6082-t6",
+   "code": "6082-T6",
+   "name": "Aluminyum Alasimi",
+   "group": "aluminyum",
+   "subtitle": "AlSi1MgMn",
+   "hardness": [
+    95,
+    95
+   ],
+   "hardnessScale": "HB",
+   "tensile": [
+    310,
+    340
+   ],
+   "kc": 720,
+   "machinability": "kolay",
+   "accent": "success",
+   "desc": "Yapisal aluminyum alasimi, yuksek kesme hizlarina uygun",
+   "tags": [
+    "Aluminyum",
+    "Yapisal",
+    "Yuksek Vc"
+   ],
+   "coolant": "Hava / Mist",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       350,
+       600
+      ],
+      "fz": [
+       0.08,
+       0.25
+      ]
+     },
+     "hss": {
+      "vc": [
+       100,
+       180
+      ],
+      "fz": [
+       0.05,
+       0.15
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       400,
+       700
+      ],
+      "f": [
+       0.1,
+       0.4
+      ]
+     },
+     "hss": {
+      "vc": [
+       110,
+       200
+      ],
+      "f": [
+       0.08,
+       0.25
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       130,
+       250
+      ],
+      "f": [
+       0.15,
+       0.35
+      ]
+     },
+     "hss": {
+      "vc": [
+       55,
+       95
+      ],
+      "f": [
+       0.1,
+       0.25
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "7075-t6",
+   "code": "7075-T6",
+   "name": "Yuksek Mukavemetli Aluminyum",
+   "group": "aluminyum",
+   "subtitle": "AlZn5.5MgCu",
+   "hardness": [
+    150,
+    150
+   ],
+   "hardnessScale": "HB",
+   "tensile": [
+    540,
+    580
+   ],
+   "kc": 850,
+   "machinability": "kolay",
+   "accent": "success",
+   "desc": "Cinko alasimli, havacilikta kullanilan aluminyum",
+   "tags": [
+    "Aluminyum",
+    "Havacilik",
+    "Yuksek mukavemet"
+   ],
+   "coolant": "Hava / Mist",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       300,
+       550
+      ],
+      "fz": [
+       0.07,
+       0.22
+      ]
+     },
+     "hss": {
+      "vc": [
+       90,
+       160
+      ],
+      "fz": [
+       0.04,
+       0.13
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       350,
+       650
+      ],
+      "f": [
+       0.1,
+       0.35
+      ]
+     },
+     "hss": {
+      "vc": [
+       100,
+       180
+      ],
+      "f": [
+       0.08,
+       0.22
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       110,
+       220
+      ],
+      "f": [
+       0.14,
+       0.32
+      ]
+     },
+     "hss": {
+      "vc": [
+       45,
+       85
+      ],
+      "f": [
+       0.09,
+       0.22
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "gg25",
+   "code": "GG25",
+   "name": "Gri Dokme Demir",
+   "group": "dokme-demir",
+   "subtitle": "EN-GJL-250",
+   "hardness": [
+    180,
+    220
+   ],
+   "hardnessScale": "HB",
+   "tensile": [
+    250,
+    300
+   ],
+   "kc": 1100,
+   "machinability": "kolay",
+   "accent": "chart4",
+   "desc": "Lamel grafitli gri dokme demir, kirilgan talas",
+   "tags": [
+    "Dokme demir",
+    "Toz talas",
+    "Kuru islenebilir"
+   ],
+   "coolant": "Kuru / Hava",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       150,
+       250
+      ],
+      "fz": [
+       0.08,
+       0.2
+      ]
+     },
+     "hss": {
+      "vc": [
+       25,
+       45
+      ],
+      "fz": [
+       0.05,
+       0.12
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       180,
+       300
+      ],
+      "f": [
+       0.2,
+       0.5
+      ]
+     },
+     "hss": {
+      "vc": [
+       30,
+       50
+      ],
+      "f": [
+       0.15,
+       0.3
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       60,
+       100
+      ],
+      "f": [
+       0.15,
+       0.3
+      ]
+     },
+     "hss": {
+      "vc": [
+       18,
+       28
+      ],
+      "f": [
+       0.1,
+       0.2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "ggg40",
+   "code": "GGG40",
+   "name": "Kuresel Grafitli Dokme Demir",
+   "group": "dokme-demir",
+   "subtitle": "EN-GJS-400-15",
+   "hardness": [
+    140,
+    200
+   ],
+   "hardnessScale": "HB",
+   "tensile": [
+    400,
+    450
+   ],
+   "kc": 1300,
+   "machinability": "orta",
+   "accent": "chart4",
+   "desc": "Sunek dokme demir, mekanik parcalar icin",
+   "tags": [
+    "Dokme demir",
+    "Sunek",
+    "Sferoidal"
+   ],
+   "coolant": "Kuru / Sogutma Sivisi",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       130,
+       220
+      ],
+      "fz": [
+       0.08,
+       0.18
+      ]
+     },
+     "hss": {
+      "vc": [
+       22,
+       40
+      ],
+      "fz": [
+       0.05,
+       0.1
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       160,
+       260
+      ],
+      "f": [
+       0.18,
+       0.45
+      ]
+     },
+     "hss": {
+      "vc": [
+       28,
+       45
+      ],
+      "f": [
+       0.14,
+       0.28
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       55,
+       95
+      ],
+      "f": [
+       0.14,
+       0.28
+      ]
+     },
+     "hss": {
+      "vc": [
+       16,
+       26
+      ],
+      "f": [
+       0.09,
+       0.18
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "cuzn39pb3",
+   "code": "CuZn39Pb3",
+   "name": "Pirinc",
+   "group": "pirinc-bronz",
+   "subtitle": "MS58 / Otomat pirinci",
+   "hardness": [
+    110,
+    150
+   ],
+   "hardnessScale": "HB",
+   "tensile": [
+    370,
+    450
+   ],
+   "kc": 600,
+   "machinability": "kolay",
+   "accent": "primary",
+   "desc": "Kursunlu otomat pirinci, cok kolay islenir",
+   "tags": [
+    "Pirinc",
+    "Otomat",
+    "Cok kolay islenir"
+   ],
+   "coolant": "Kuru / Sogutma Sivisi",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       200,
+       400
+      ],
+      "fz": [
+       0.08,
+       0.22
+      ]
+     },
+     "hss": {
+      "vc": [
+       70,
+       140
+      ],
+      "fz": [
+       0.05,
+       0.14
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       250,
+       500
+      ],
+      "f": [
+       0.1,
+       0.4
+      ]
+     },
+     "hss": {
+      "vc": [
+       80,
+       160
+      ],
+      "f": [
+       0.08,
+       0.25
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       100,
+       180
+      ],
+      "f": [
+       0.15,
+       0.3
+      ]
+     },
+     "hss": {
+      "vc": [
+       40,
+       80
+      ],
+      "f": [
+       0.1,
+       0.22
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "cusn12",
+   "code": "CuSn12",
+   "name": "Bronz",
+   "group": "pirinc-bronz",
+   "subtitle": "Kalay bronzu",
+   "hardness": [
+    90,
+    130
+   ],
+   "hardnessScale": "HB",
+   "tensile": [
+    280,
+    350
+   ],
+   "kc": 750,
+   "machinability": "kolay",
+   "accent": "primary",
+   "desc": "Kalay bronzu, yatak ve burc malzemesi",
+   "tags": [
+    "Bronz",
+    "Yatak malzemesi"
+   ],
+   "coolant": "Sogutma Sivisi",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       150,
+       300
+      ],
+      "fz": [
+       0.07,
+       0.18
+      ]
+     },
+     "hss": {
+      "vc": [
+       50,
+       100
+      ],
+      "fz": [
+       0.04,
+       0.12
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       180,
+       350
+      ],
+      "f": [
+       0.1,
+       0.35
+      ]
+     },
+     "hss": {
+      "vc": [
+       60,
+       120
+      ],
+      "f": [
+       0.08,
+       0.22
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       70,
+       130
+      ],
+      "f": [
+       0.12,
+       0.25
+      ]
+     },
+     "hss": {
+      "vc": [
+       30,
+       60
+      ],
+      "f": [
+       0.09,
+       0.18
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "ti-6al-4v",
+   "code": "Ti-6Al-4V",
+   "name": "Titanyum Alasimi",
+   "group": "titanyum",
+   "subtitle": "Grade 5 / 3.7165",
+   "hardness": [
+    30,
+    36
+   ],
+   "hardnessScale": "HRC",
+   "tensile": [
+    900,
+    1100
+   ],
+   "kc": 1900,
+   "machinability": "cok-zor",
+   "accent": "chart5",
+   "desc": "Alfa-beta titanyum alasimi, dusuk isi iletimi",
+   "tags": [
+    "Titanyum",
+    "Dusuk Vc",
+    "Yangin riski"
+   ],
+   "coolant": "Yuksek Basincli Sogutma",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       40,
+       80
+      ],
+      "fz": [
+       0.04,
+       0.1
+      ]
+     },
+     "hss": {
+      "vc": [
+       10,
+       18
+      ],
+      "fz": [
+       0.02,
+       0.05
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       50,
+       100
+      ],
+      "f": [
+       0.1,
+       0.25
+      ]
+     },
+     "hss": {
+      "vc": [
+       12,
+       22
+      ],
+      "f": [
+       0.06,
+       0.14
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       15,
+       35
+      ],
+      "f": [
+       0.06,
+       0.14
+      ]
+     },
+     "hss": {
+      "vc": [
+       6,
+       12
+      ],
+      "f": [
+       0.04,
+       0.09
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "inconel-718",
+   "code": "Inconel 718",
+   "name": "Nikel Esasli Superalasim",
+   "group": "nikel",
+   "subtitle": "2.4668",
+   "hardness": [
+    36,
+    44
+   ],
+   "hardnessScale": "HRC",
+   "tensile": [
+    1200,
+    1400
+   ],
+   "kc": 2900,
+   "machinability": "cok-zor",
+   "accent": "destructive",
+   "desc": "Yuksek sicaklik dayanimli nikel superalasimi",
+   "tags": [
+    "Superalasim",
+    "Cok zor islenir",
+    "Takim asinmasi"
+   ],
+   "coolant": "Yuksek Basincli Sogutma",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       25,
+       50
+      ],
+      "fz": [
+       0.03,
+       0.08
+      ]
+     },
+     "hss": {
+      "vc": [
+       6,
+       12
+      ],
+      "fz": [
+       0.015,
+       0.035
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       30,
+       60
+      ],
+      "f": [
+       0.08,
+       0.2
+      ]
+     },
+     "hss": {
+      "vc": [
+       8,
+       14
+      ],
+      "f": [
+       0.05,
+       0.1
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       10,
+       25
+      ],
+      "f": [
+       0.05,
+       0.12
+      ]
+     },
+     "hss": {
+      "vc": [
+       4,
+       9
+      ],
+      "f": [
+       0.03,
+       0.07
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "pom",
+   "code": "POM",
+   "name": "Poliasetal",
+   "group": "plastik",
+   "subtitle": "Delrin / C",
+   "hardness": [
+    80,
+    120
+   ],
+   "hardnessScale": "HB",
+   "tensile": [
+    65,
+    75
+   ],
+   "kc": 180,
+   "machinability": "kolay",
+   "accent": "chart2",
+   "desc": "Boyutsal kararliligi yuksek muhendislik plastigi",
+   "tags": [
+    "Plastik",
+    "Kolay islenir",
+    "Keskin takim"
+   ],
+   "coolant": "Hava / Kuru",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       400,
+       900
+      ],
+      "fz": [
+       0.1,
+       0.3
+      ]
+     },
+     "hss": {
+      "vc": [
+       200,
+       500
+      ],
+      "fz": [
+       0.08,
+       0.25
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       400,
+       900
+      ],
+      "f": [
+       0.1,
+       0.5
+      ]
+     },
+     "hss": {
+      "vc": [
+       200,
+       500
+      ],
+      "f": [
+       0.1,
+       0.35
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       150,
+       300
+      ],
+      "f": [
+       0.15,
+       0.4
+      ]
+     },
+     "hss": {
+      "vc": [
+       80,
+       180
+      ],
+      "f": [
+       0.12,
+       0.3
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "pa6",
+   "code": "PA6",
+   "name": "Poliamid (Naylon)",
+   "group": "plastik",
+   "subtitle": "Naylon 6",
+   "hardness": [
+    70,
+    110
+   ],
+   "hardnessScale": "HB",
+   "tensile": [
+    70,
+    85
+   ],
+   "kc": 200,
+   "machinability": "kolay",
+   "accent": "chart2",
+   "desc": "Tokluk ve asinma direnci yuksek muhendislik plastigi",
+   "tags": [
+    "Plastik",
+    "Nem alir",
+    "Elastik"
+   ],
+   "coolant": "Hava / Kuru",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       300,
+       800
+      ],
+      "fz": [
+       0.1,
+       0.28
+      ]
+     },
+     "hss": {
+      "vc": [
+       150,
+       400
+      ],
+      "fz": [
+       0.08,
+       0.22
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       300,
+       800
+      ],
+      "f": [
+       0.1,
+       0.45
+      ]
+     },
+     "hss": {
+      "vc": [
+       150,
+       400
+      ],
+      "f": [
+       0.1,
+       0.3
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       120,
+       250
+      ],
+      "f": [
+       0.15,
+       0.35
+      ]
+     },
+     "hss": {
+      "vc": [
+       70,
+       150
+      ],
+      "f": [
+       0.12,
+       0.28
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "peek",
+   "code": "PEEK",
+   "name": "Poliaterreketon",
+   "group": "plastik",
+   "subtitle": "Yuksek performans plastik",
+   "hardness": [
+    100,
+    130
+   ],
+   "hardnessScale": "HB",
+   "tensile": [
+    95,
+    110
+   ],
+   "kc": 260,
+   "machinability": "orta",
+   "accent": "chart2",
+   "desc": "Yuksek sicaklik ve kimyasal dayanimli plastik",
+   "tags": [
+    "Plastik",
+    "Yuksek performans",
+    "Abrasif dolgu"
+   ],
+   "coolant": "Hava / Sogutma Sivisi",
+   "ops": {
+    "freze": {
+     "karbur": {
+      "vc": [
+       250,
+       600
+      ],
+      "fz": [
+       0.08,
+       0.22
+      ]
+     },
+     "hss": {
+      "vc": [
+       120,
+       300
+      ],
+      "fz": [
+       0.06,
+       0.18
+      ]
+     }
+    },
+    "torna": {
+     "karbur": {
+      "vc": [
+       250,
+       600
+      ],
+      "f": [
+       0.1,
+       0.4
+      ]
+     },
+     "hss": {
+      "vc": [
+       120,
+       300
+      ],
+      "f": [
+       0.1,
+       0.28
+      ]
+     }
+    },
+    "matkap": {
+     "karbur": {
+      "vc": [
+       100,
+       200
+      ],
+      "f": [
+       0.12,
+       0.3
+      ]
+     },
+     "hss": {
+      "vc": [
+       60,
+       120
+      ],
+      "f": [
+       0.1,
+       0.24
+      ]
+     }
+    }
+   }
+  }
+ ]
+}
