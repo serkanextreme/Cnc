@@ -11,6 +11,7 @@ import MaterialDetail from './pages/MaterialDetail';
 import MaterialForm from './pages/MaterialForm';
 import Threading from './pages/Threading';
 import Tools from './pages/Tools';
+import ChatterFree from './pages/ChatterFree';
 import HistoryPage from './pages/History';
 import SettingsPage from './pages/Settings';
 
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="/matkap" element={<Drilling />} />
           <Route path="/dis" element={<Threading />} />
           <Route path="/takimlar" element={<Tools />} />
+          <Route path="/chatter-free" element={<ChatterFree />} />
           <Route path="/malzemeler" element={<Materials />} />
           <Route path="/malzeme/yeni" element={<MaterialForm />} />
           <Route path="/malzeme/:id/duzenle" element={<MaterialForm />} />

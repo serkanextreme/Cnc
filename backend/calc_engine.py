@@ -429,3 +429,95 @@ def adjust_for_hardness(material: dict, new_hb: float) -> dict:
             }
     out["ops"] = ops
     return out
+
+
+# =============================================================================
+# CHATTER-FREE / HEM (Yuksek Verimli Frezeleme)
+# Kesici helis boyunun tamami eksenel derinlik (ap) olarak kullanilir,
+# radyal kavrama (ae) cok kucuk tutulur -> talas incelmesi telafisi sarttir.
+# =============================================================================
+HEM_AE_MIN_PCT = 3.0
+HEM_AE_MAX_PCT = 20.0
+
+
+def rctf(ae: float, d: float) -> float:
+    """Radyal talas incelme faktoru: RCTF = 1 / sqrt(1 - (1 - 2*ae/D)^2)"""
+    if d <= 0 or ae <= 0:
+        return 1.0
+    ratio = min(ae / d, 0.5)
+    x = 1.0 - 2.0 * ratio
+    val = 1.0 - x * x
+    if val <= 0:
+        return 1.0
+    return 1.0 / math.sqrt(val)
+
+
+def tooth_passing_frequency(n: float, z: int) -> float:
+    """Dis gecis frekansi [Hz] = n * z / 60"""
+    return (n * z) / 60.0
+
+
+def chatter_free_spindle_speeds(chatter_hz: float, z: int, lobes: int = 4):
+    """Olculen chatter frekansina gore kararli devir onerileri: N = 60*fc/(z*(k+1))"""
+    if not chatter_hz or chatter_hz <= 0 or z <= 0:
+        return []
+    return [
+        {"lobe": k, "rpm": (60.0 * chatter_hz) / (z * (k + 1))}
+        for k in range(0, max(1, lobes))
+    ]
+
+
+def calc_chatter_free(vc, d, z, fz_target, ap, ae, kc, flute_length=None,
+                      eta=0.8, limits=None, vc_factor=1.0, chatter_hz=0.0):
+    """HEM / chatter-free frezeleme hesabi."""
+    if d <= 0:
+        raise ValueError("Takim capi sifirdan buyuk olmali")
+    if ae <= 0 or ae > d:
+        raise ValueError("Radyal kavrama 0 ile takim capi arasinda olmali")
+    vc_eff_input = vc * (vc_factor or 1.0)
+    n0 = rpm_from_vc(vc_eff_input, d)
+    factor = rctf(ae, d)
+    fz_prog = fz_target * factor
+    vf0 = vf_milling(fz_prog, z, n0)
+    lim = apply_machine_limits(n0, vf0, d, limits or {})
+    q = mrr_milling(ap, ae, lim["vf"])
+    p = power_kw(q, kc, eta)
+
+    # gercek (ortalama) talas kalinligi -> hedefe esit olmali
+    hm = chip_thinning_hm(fz_prog, ae, d)
+
+    # klasik frezeleme ile karsilastirma (ap = 0.5D, ae = 0.5D, telafi yok)
+    ap_conv = d * 0.5
+    ae_conv = d * 0.5
+    n_conv = rpm_from_vc(vc, d)
+    vf_conv = vf_milling(fz_target, z, n_conv)
+    q_conv = mrr_milling(ap_conv, ae_conv, vf_conv)
+
+    warnings = []
+    ae_pct = (ae / d) * 100.0
+    if ae_pct > HEM_AE_MAX_PCT:
+        warnings.append("Radyal kavrama %20'nin uzerinde — chatter-free avantaji azalir")
+    if ae_pct < HEM_AE_MIN_PCT:
+        warnings.append("Radyal kavrama cok kucuk — talas cok ince, takim ovalar")
+    if flute_length and ap > flute_length + 1e-9:
+        warnings.append("Eksenel derinlik kesici (helis) boyunu asiyor")
+    if ap > 3.0 * d:
+        warnings.append("Eksenel derinlik 3xD'yi asiyor — takim sapmasi/kirilma riski")
+
+    return {
+        "n": lim["n"], "vf": lim["vf"], "vcEffective": lim["vcEffective"],
+        "rctf": factor, "fzProgrammed": fz_prog, "fzTarget": fz_target, "hm": hm,
+        "aePercent": ae_pct, "engagement": engagement_angle_deg(ae, d),
+        "q": q, "power": p, "torque": torque_nm(p, lim["n"]),
+        "toothPassHz": tooth_passing_frequency(lim["n"], z),
+        "chatterSpeeds": chatter_free_spindle_speeds(chatter_hz, z),
+        "edgeUseRatio": (ap / ap_conv) if ap_conv > 0 else 0.0,
+        "comparison": {
+            "apConventional": ap_conv, "aeConventional": ae_conv,
+            "vfConventional": vf_conv, "qConventional": q_conv,
+            "mrrGain": (q / q_conv) if q_conv > 0 else 0.0,
+            "timeSavingPct": (1.0 - (q_conv / q)) * 100.0 if q > 0 else 0.0,
+        },
+        "warnings": warnings,
+        "limits": lim,
+    }

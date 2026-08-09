@@ -46,7 +46,7 @@ export function groupByDay(history) {
 export function todayStats(history) {
   const today = startOfDay(new Date()).getTime();
   const items = history.filter((r) => startOfDay(r.createdAt).getTime() === today);
-  const counts = { freze: 0, torna: 0, matkap: 0, dis: 0 };
+  const counts = { freze: 0, torna: 0, matkap: 0, dis: 0, chatter: 0 };
   items.forEach((r) => {
     if (counts[r.op] !== undefined) counts[r.op] += 1;
   });
@@ -61,6 +61,14 @@ export function describeRecord(rec, unitSystem) {
   if (rec.op === 'freze' && i.z) parts.push(`${i.z} ağız`);
   if (rec.op === 'matkap' && i.depth) parts.push(`${formatQty('length', i.depth, unitSystem)} ${unitLabel('length', unitSystem)} derinlik`);
   if (rec.op === 'torna' && i.direction) parts.push(i.direction === 'id' ? 'İç çap' : 'Dış çap');
+  if (rec.op === 'chatter') {
+    return {
+      title: 'Chatter-Free',
+      material: rec.materialCode,
+      subtitle: `Ø${formatQty('length', i.d, unitSystem)} · ap ${formatQty('length', i.ap, unitSystem)} · ae ${formatQty('length', i.ae, unitSystem)} ${unitLabel('length', unitSystem)}`,
+      time: timeLabel(rec.createdAt),
+    };
+  }
   if (rec.op === 'dis') {
     const modeLabel = { kilavuz: 'Kılavuz', frezeleme: 'Diş frezesi', torna: 'Torna dişi' }[i.mode] || '';
     return {
@@ -95,6 +103,12 @@ export function buildShareText(rec, unitSystem, materialName) {
     lines.push(`Uç: ${i.tool === 'hss' ? 'HSS kalem' : 'Karbür uç'} · rε ${formatQty('length', i.noseR, unitSystem)} ${L('length')}`);
     lines.push(`Ø${formatQty('length', i.d, unitSystem)} ${L('length')} · ${i.direction === 'id' ? 'İç çap' : 'Dış çap'}`);
     lines.push(`Vc ${formatQty('vc', i.vc, unitSystem)} ${L('vc')} · f ${formatQty('f', i.f, unitSystem)} ${L('f')} · ap ${formatQty('length', i.ap, unitSystem)} ${L('length')}`);
+  } else if (rec.op === 'chatter') {
+    lines.push(`Takım: ${i.tool === 'hss' ? 'HSS' : 'Karbür'} Ø${formatQty('length', i.d, unitSystem)} ${L('length')} · ${i.z} ağız · helis ${formatQty('length', i.fluteLength, unitSystem)} ${L('length')}`);
+    lines.push(`ap ${formatQty('length', i.ap, unitSystem)} · ae ${formatQty('length', i.ae, unitSystem)} ${L('length')} (%${((i.ae / i.d) * 100).toFixed(1)})`);
+    lines.push(`Vc ${formatQty('vc', i.vc, unitSystem)} ${L('vc')} × ${i.vcFactor || 1} · hedef fz ${formatQty('fz', i.fz, unitSystem)} ${L('fz')}`);
+    if (o.rctf) lines.push(`RCTF ${o.rctf.toFixed(3)} → programlanan fz ${formatQty('fz', o.fzProgrammed, unitSystem)} ${L('fz')}`);
+    if (o.mrrGain) lines.push(`Klasik frezelemeye göre ${o.mrrGain.toFixed(2)}× talaş hacmi`);
   } else if (rec.op === 'dis') {
     const modeLabel = { kilavuz: 'Kılavuz', frezeleme: 'Diş frezesi', torna: 'Torna dişi' }[i.mode] || 'Diş';
     lines.push(`Yöntem: ${modeLabel}${rec.threadLabel ? ` · ${rec.threadLabel}` : ''}`);

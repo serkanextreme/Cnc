@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  AudioWaveform,
   Bolt,
   CircleDotDashed,
   Drill,
@@ -25,13 +26,14 @@ import {
 import { buildShareText, describeRecord, groupByDay, shareText, todayStats } from '../lib/records';
 import { formatNumber, formatQty, unitLabel } from '../lib/units';
 
-const OP_ICONS = { freze: CircleDotDashed, torna: RotateCw, matkap: Drill, dis: Bolt };
+const OP_ICONS = { freze: CircleDotDashed, torna: RotateCw, matkap: Drill, dis: Bolt, chatter: AudioWaveform };
 const OP_FILTERS = [
   { id: 'all', label: 'Tümü' },
   { id: 'freze', label: 'Freze' },
   { id: 'torna', label: 'Torna' },
   { id: 'matkap', label: 'Matkap' },
   { id: 'dis', label: 'Kılavuz / Diş' },
+  { id: 'chatter', label: 'Chatter-Free' },
 ];
 
 export default function HistoryPage() {

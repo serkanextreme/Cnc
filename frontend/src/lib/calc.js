@@ -427,3 +427,87 @@ export function adjustForHardness(material, newHb) {
     ops,
   };
 }
+
+/* =========================================================================
+   CHATTER-FREE / HEM (Yüksek Verimli Frezeleme)
+   Kesicinin helis (kesici) boyu tamamı eksenel derinlik olarak kullanılır,
+   radyal kavrama küçük tutulur -> talaş incelmesi telafisi zorunludur.
+   ========================================================================= */
+export const HEM_AE_PRESETS = [3, 5, 8, 10, 15];
+
+/** Radyal talaş incelme faktörü: RCTF = 1 / √(1 − (1 − 2·ae/D)²) */
+export function rctf(ae, d) {
+  if (!(d > 0) || !(ae > 0)) return 1;
+  const ratio = Math.min(ae / d, 0.5);
+  const x = 1 - 2 * ratio;
+  const val = 1 - x * x;
+  if (val <= 0) return 1;
+  return 1 / Math.sqrt(val);
+}
+
+/** Diş geçiş frekansı [Hz] */
+export function toothPassingFrequency(n, z) {
+  return (n * z) / 60;
+}
+
+/** Ölçülen chatter frekansına göre kararlı devir önerileri */
+export function chatterFreeSpindleSpeeds(chatterHz, z, lobes = 4) {
+  if (!(chatterHz > 0) || !(z > 0)) return [];
+  return Array.from({ length: lobes }, (_, k) => ({
+    lobe: k,
+    rpm: (60 * chatterHz) / (z * (k + 1)),
+  }));
+}
+
+export function calcChatterFree({ vc, d, z, fzTarget, ap, ae, kc = 2100, fluteLength = 0,
+  eta = 0.8, limits = null, vcFactor = 1, chatterHz = 0 }) {
+  if (!(d > 0) || !(ae > 0) || ae > d) return null;
+  const n0 = rpmFromVc(vc * (vcFactor || 1), d);
+  const factor = rctf(ae, d);
+  const fzProgrammed = fzTarget * factor;
+  const vf0 = vfMilling(fzProgrammed, z, n0);
+  const lim = applyMachineLimits(n0, vf0, d, limits);
+  const q = mrrMilling(ap, ae, lim.vf);
+  const power = powerKw(q, kc, eta);
+
+  const apConv = d * 0.5;
+  const aeConv = d * 0.5;
+  const nConv = rpmFromVc(vc, d);
+  const vfConv = vfMilling(fzTarget, z, nConv);
+  const qConv = mrrMilling(apConv, aeConv, vfConv);
+
+  const aePercent = (ae / d) * 100;
+  const warnings = [];
+  if (aePercent > 20) warnings.push('Radyal kavrama %20’nin üzerinde — chatter-free avantajı azalır');
+  if (aePercent < 3) warnings.push('Radyal kavrama çok küçük — talaş çok ince, takım ovalar');
+  if (fluteLength > 0 && ap > fluteLength + 1e-9) warnings.push('Eksenel derinlik kesici (helis) boyunu aşıyor');
+  if (ap > 3 * d) warnings.push('Eksenel derinlik 3×D’yi aşıyor — takım sapması/kırılma riski');
+
+  return {
+    n: lim.n,
+    vf: lim.vf,
+    vcEffective: lim.vcEffective,
+    rctf: factor,
+    fzProgrammed,
+    fzTarget,
+    hm: chipThinningHm(fzProgrammed, ae, d),
+    aePercent,
+    engagement: engagementAngleDeg(ae, d),
+    q,
+    power,
+    torque: torqueNm(power, lim.n),
+    toothPassHz: toothPassingFrequency(lim.n, z),
+    chatterSpeeds: chatterFreeSpindleSpeeds(chatterHz, z),
+    edgeUseRatio: apConv > 0 ? ap / apConv : 0,
+    comparison: {
+      apConventional: apConv,
+      aeConventional: aeConv,
+      vfConventional: vfConv,
+      qConventional: qConv,
+      mrrGain: qConv > 0 ? q / qConv : 0,
+      timeSavingPct: q > 0 ? (1 - qConv / q) * 100 : 0,
+    },
+    warnings,
+    limits: lim,
+  };
+}

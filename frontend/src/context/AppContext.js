@@ -28,6 +28,7 @@ export function AppProvider({ children }) {
       torna: { ...DEFAULT_DRAFTS.torna, ...(saved.torna || {}) },
       matkap: { ...DEFAULT_DRAFTS.matkap, ...(saved.matkap || {}) },
       dis: { ...DEFAULT_DRAFTS.dis, ...(saved.dis || {}) },
+      chatter: { ...DEFAULT_DRAFTS.chatter, ...(saved.chatter || {}) },
     };
   });
   const [tools, setTools] = useState(() => readJSON(KEYS.tools, []));
@@ -180,6 +181,7 @@ export function AppProvider({ children }) {
         torna: { ...DEFAULT_DRAFTS.torna, ...(payload.drafts.torna || {}) },
         matkap: { ...DEFAULT_DRAFTS.matkap, ...(payload.drafts.matkap || {}) },
         dis: { ...DEFAULT_DRAFTS.dis, ...(payload.drafts.dis || {}) },
+        chatter: { ...DEFAULT_DRAFTS.chatter, ...(payload.drafts.chatter || {}) },
       });
     }
   }, []);

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  AudioWaveform,
   Bolt,
   ChevronRight,
   CircleDotDashed,
@@ -26,7 +27,7 @@ import {
 import { describeRecord } from '../lib/records';
 import { formatNumber, formatQty, unitLabel } from '../lib/units';
 
-const OP_ICONS = { freze: CircleDotDashed, torna: RotateCw, matkap: Drill, dis: Bolt };
+const OP_ICONS = { freze: CircleDotDashed, torna: RotateCw, matkap: Drill, dis: Bolt, chatter: AudioWaveform };
 
 export default function Home() {
   const navigate = useNavigate();
@@ -161,6 +162,26 @@ export default function Home() {
                   </p>
                 </div>
                 <ChevronRight className="h-[18px] w-[18px] shrink-0 text-accent" />
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate('/chatter-free')}
+              data-testid="op-chatter"
+              className="col-span-2 rounded-theme border border-primary/50 bg-card p-4 text-left text-card-foreground transition-colors active:bg-muted/60"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-theme bg-primary/15 text-primary">
+                  <AudioWaveform className="h-5 w-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h3 className="title-md">Chatter-Free</h3>
+                  <p className="mt-1 text-xs leading-4 text-muted-foreground">
+                    Helis boyu kadar dalma · yan duvarla kesme · titreşimsiz
+                  </p>
+                </div>
+                <ChevronRight className="h-[18px] w-[18px] shrink-0 text-primary" />
               </div>
             </button>
           </div>

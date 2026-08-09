@@ -104,7 +104,7 @@ async def root():
                       "/api/materials/{id}", "/api/machine-presets",
                       "/api/calc/freze", "/api/calc/torna", "/api/calc/matkap",
                       "/api/threads", "/api/calc/kilavuz", "/api/calc/dis-frezesi",
-                      "/api/calc/dis-torna", "/api/tool-life"],
+                      "/api/calc/dis-torna", "/api/calc/chatter-free", "/api/tool-life"],
     }
 
 
@@ -281,6 +281,35 @@ async def calc_dis_torna(req: ThreadTurnRequest):
         raise HTTPException(status_code=400, detail=str(exc))
     res["formulas"] = ["n = (1000 × Vc) / (π × D)", "Vf = adım × n",
                        "h = 0,6134 × P", "ap(i) = h × (√(i/N) − √((i−1)/N))"]
+    return res
+
+
+class ChatterFreeRequest(BaseModel):
+    vc: float = Field(..., gt=0)
+    d: float = Field(..., gt=0)
+    z: int = Field(..., ge=1)
+    fzTarget: float = Field(..., gt=0)
+    ap: float = Field(..., gt=0)
+    ae: float = Field(..., gt=0)
+    kc: float = Field(2100, gt=0)
+    fluteLength: float = Field(0, ge=0)
+    eta: float = Field(0.8, gt=0, le=1)
+    vcFactor: float = Field(1.0, gt=0, le=3)
+    chatterHz: float = Field(0, ge=0)
+    limits: Optional[Limits] = None
+
+
+@api_router.post("/calc/chatter-free")
+async def calc_chatter_free(req: ChatterFreeRequest):
+    try:
+        res = ce.calc_chatter_free(req.vc, req.d, req.z, req.fzTarget, req.ap, req.ae,
+                                   req.kc, req.fluteLength, req.eta, _limits(req.limits),
+                                   req.vcFactor, req.chatterHz)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    res["formulas"] = ["RCTF = 1 / √(1 − (1 − 2·ae/D)²)", "fz(prog) = fz(hedef) × RCTF",
+                       "Vf = fz(prog) × z × n", "Q = ap × ae × Vf",
+                       "f(diş geçiş) = n × z / 60", "n(kararlı) = 60 × fc / (z × (k+1))"]
     return res
 
 

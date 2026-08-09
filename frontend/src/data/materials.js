@@ -10,7 +10,7 @@ export const ISO_GROUPS = catalog.isoGroups;
 export const SUBGROUPS = catalog.subgroups;
 export const MACHINABILITY = catalog.machinability;
 export const MACHINE_PRESETS = catalog.machinePresets;
-export const AUTO_PRESET = catalog.autoPreset;
+export const AUTO_PRESET = { ...catalog.autoPreset, chatter: catalog.autoPreset.freze };
 export const INSERT_TYPES = catalog.insertTypes;
 export const COOLANT_OPTIONS = catalog.coolantOptions;
 export const SEED_MATERIALS = catalog.materials;
@@ -23,6 +23,7 @@ export const OPERATIONS = [
   { id: 'torna', label: 'Torna', route: '/torna', icon: 'RotateCw', desc: 'Dış/iç çap tornalama', feedKey: 'f' },
   { id: 'matkap', label: 'Matkap', route: '/matkap', icon: 'Drill', desc: 'Delik delme çevrimi', feedKey: 'f' },
   { id: 'dis', label: 'Kılavuz / Diş', route: '/dis', icon: 'Bolt', desc: 'Kılavuz, diş frezesi, torna dişi', feedKey: 'f' },
+  { id: 'chatter', label: 'Chatter-Free', route: '/chatter-free', icon: 'AudioWaveform', desc: 'Helis boyu kadar dalma, HEM', feedKey: 'fz' },
 ];
 
 export const TOOL_MATERIALS = [
@@ -147,6 +148,10 @@ export const DEFAULT_DRAFTS = {
     length: 25,
     passes: 0,
     hardnessOverride: 0,
+  },
+  chatter: {
+    tool: 'karbur', d: 12, z: 4, fluteLength: 20, ap: 20, ae: 1.2,
+    vc: 140, fz: 0.08, vcFactor: 1.2, chatterHz: 0, hardnessOverride: 0,
   },
 };
 
