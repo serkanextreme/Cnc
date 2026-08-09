@@ -31,7 +31,9 @@ export default function App() {
         </Routes>
       </BrowserRouter>
       <Toaster
-        position="top-center"
+        position="bottom-center"
+        offset="96px"
+        duration={2600}
         theme="dark"
         toastOptions={{
           style: {

@@ -168,3 +168,14 @@ Frontend (offline-first PWA, React + Tailwind):
 
 ### Sıradaki
 - Phase 2 kapanışı: testing_agent_v3 ile uçtan uca test + bulunan tüm hataların düzeltilmesi
+
+### Phase 2 Test Sonuçları ✅
+- **Tur 1 (backend + frontend):** Backend 54/54 geçti · Frontend 40+ test geçti. Tüm mockup değerleri birebir doğrulandı.
+- **Tur 2 (eksik akışlar):** Özel malzeme CRUD, Ayarlar (preset/verim/export), Geçmiş (yeniden aç/filtre/sil), malzeme seçici drawer ve regresyon testleri geçti.
+- **Düzeltilen hatalar:**
+  1. `AppProvider` içindeki useEffect'ler değer döndürüyordu → "destroy is not a function" (uygulama açılmıyordu) — düzeltildi.
+  2. Hedef Ra ilerlemesi uygulanınca Ra 1,59 / "Kontrol edin" görünüyordu → artık tam 1,60 ve "Uygun".
+  3. **Toast bildirimleri üstte açılıp başlık butonlarını (ör. "Düzenle") kapatıyordu** → bildirimler alt tarafa (bottom-center, +96px) taşındı; malzeme düzenleme akışı artık sorunsuz.
+  4. Aktif malzeme kartına `data-testid="active-material-card"` eklendi.
+- **Yanlış alarm olarak doğrulananlar:** Torna preset clamp (lathe_conv → devir 2.000'e sınırlandı, efektif Vc 126 m/dk) ve input `data-testid`'leri — manuel olarak çalıştığı doğrulandı.
+- **Çevrimdışı doğrulama:** Ağ kapatılıp sayfa yenilendi → uygulama açıldı, gezinme ve hesaplama çalıştı (Torna 1.146 dev/dk).

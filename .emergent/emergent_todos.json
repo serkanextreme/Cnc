@@ -4,7 +4,7 @@
     "status": "completed"
   },
   {
-    "content": "Phase 1: POC'u çalıştır ve mockup sayılarıyla birebir doğrula (3714/1188, 1146/252, 2546/407, 4.4sn)",
+    "content": "Phase 1: Mockup sayılarıyla birebir doğrulama (3714/1188, 1146/252, 2546/407, 4.4sn)",
     "status": "completed"
   },
   {
@@ -28,15 +28,15 @@
     "status": "completed"
   },
   {
-    "content": "Phase 2: Offline PWA (manifest + service worker), CDN bağımlılığı sıfır",
+    "content": "Phase 2: Offline PWA (manifest + service worker), CDN bağımlılığı sıfır — ağ kapalıyken çalıştığı doğrulandı",
     "status": "completed"
   },
   {
-    "content": "Phase 2: Tüm user story'lerin karşılandığının doğrulanması",
-    "status": "in_progress"
+    "content": "Phase 2: Tüm user story'ler doğrulandı (14/14)",
+    "status": "completed"
   },
   {
-    "content": "Phase 2: testing_agent_v3 ile uçtan uca test ve bulunan tüm hataların düzeltilmesi",
-    "status": "in_progress"
+    "content": "Phase 2: testing_agent_v3 ile uçtan uca test (2 tur) + tüm bulunan hatalar düzeltildi",
+    "status": "completed"
   }
 ]
