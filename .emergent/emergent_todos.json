@@ -1,6 +1,6 @@
 [
   {
-    "content": "Phase 3-A: 247 malzemelik ISO tabanlı katalog + sertliğe göre Vc düzeltme (grades_source.py + build_catalog.py)",
+    "content": "Phase 3-A: 247 malzemelik ISO tabanlı katalog + sertliğe göre Vc düzeltme",
     "status": "completed"
   },
   {
@@ -12,7 +12,7 @@
     "status": "completed"
   },
   {
-    "content": "Phase 3-D: test_core2.py POC — 116/116 test geçti",
+    "content": "Phase 3-D: POC doğrulaması — test_core.py 92/92 + test_core2.py 116/116",
     "status": "completed"
   },
   {
@@ -20,15 +20,15 @@
     "status": "completed"
   },
   {
-    "content": "Phase 3-F: Frontend — /dis ekranı (3 mod), ToolLifeCard, /takimlar (kullanım sayacı), HardnessCard",
+    "content": "Phase 3-F: Frontend — /dis ekranı (3 mod), ToolLifeCard, /takimlar, HardnessCard",
     "status": "completed"
   },
   {
-    "content": "Phase 3-G: Malzeme UI — ISO filtresi, standart araması, sertlik durumu ile canlı düzeltme",
+    "content": "Phase 3-G: Malzeme UI — ISO filtresi, standart araması, canlı sertlik düzeltmesi",
     "status": "completed"
   },
   {
-    "content": "Phase 3-H: testing_agent_v3 ile uçtan uca test + tüm hataların düzeltilmesi",
-    "status": "in_progress"
+    "content": "Phase 3-H: testing_agent_v3 testi (frontend %100, backend 65/66) + bulunan hata düzeltildi",
+    "status": "completed"
   }
 ]

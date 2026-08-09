@@ -138,7 +138,9 @@ async def list_materials(q: Optional[str] = None, group: Optional[str] = None,
         items = [m for m in items
                  if needle in m['code'].lower()
                  or needle in m['name'].lower()
-                 or needle in m.get('subtitle', '').lower()]
+                 or needle in m.get('subtitle', '').lower()
+                 or needle in m.get('subgroupLabel', '').lower()
+                 or any(needle in s.lower() for s in m.get('standards', []))]
     return {"count": len(items), "items": items}
 
 

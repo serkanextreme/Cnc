@@ -217,3 +217,9 @@ Frontend:
 - Malzeme detayı: ISO grubu, HB eşdeğeri, standart karşılıkları listesi
 - Ayarlar: para birimi, referans/hedef ömür, takım fiyatı, ağız sayısı, saat ücreti, parça süresi
 - Alt sekmeler 5'e çıktı: Hesapla · Malzeme · Takım · Geçmiş · Ayarlar
+
+### Phase 3 Test Sonuçları ✅
+- POC: `/app/test_core.py` 92/92 · `/app/test_core2.py` 116/116 (toplam 208 test, hepsi geçti)
+- testing_agent_v3 (3. tur): **Frontend %100** (14/14 Phase 3 user story + regresyon), **Backend 65/66**
+- Düzeltilen hata: `/api/materials?q=` aramasının standart karşılıklarını (SCM440, Hardox, TS EN …) taramaması — düzeltildi, doğrulandı
+- Regresyon: Freze 3.714/1.188 · Torna 1.146/252/Ra 1,89 · Matkap 2.546/407/4,4 sn değerleri korunuyor; 4140 hâlâ Vc 120–160
