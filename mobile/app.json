@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "Talaş",
+    "slug": "talas-cnc-hesaplayici",
+    "description": "CNC freze, torna ve matkap için devir, kesme hızı ve ilerleme hesaplayıcı. İnternet olmadan çalışır.",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "talas",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#111719",
+    "primaryColor": "#F4B942",
+    "icon": "./assets/icon.png",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.talas.cnc",
+      "buildNumber": "1",
+      "icon": "./assets/icon.png",
+      "userInterfaceStyle": "dark"
+    },
+    "android": {
+      "package": "com.talas.cnc",
+      "versionCode": 1,
+      "userInterfaceStyle": "dark",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#111719"
+      },
+      "permissions": []
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "backgroundColor": "#111719",
+      "themeColor": "#111719",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#111719"
+        }
+      ],
+      "expo-sharing"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    }
+  }
+}

@@ -1,26 +1,54 @@
 [
   {
-    "content": "MachineCheckCard: tezgâhtaki S ve F girilince Vc(SMM), f(mm/dev), fz(mm/diş), Vf göster + hesaba uygula",
-    "status": "completed"
+    "content": "Web uygulamasının ekranlarını ve hesap motorunu incelemek (pages/, lib/, components/talas/)",
+    "status": "in_progress"
   },
   {
-    "content": "Matkaba ağız sayısı z (varsayılan 2) ekle; ilerlemeyi mm/dev ↔ mm/diş olarak girilebilir yap",
-    "status": "completed"
+    "content": "Expo projesini /app/mobile altında oluşturmak (paketler, klasör yapısı)",
+    "status": "pending"
   },
   {
-    "content": "Matkap sonuçlarına fz (mm/diş) satırı + öneri hint'ine çift birim",
-    "status": "completed"
+    "content": "Hesap motorunu (calc.js, feed.js, units.js) ve veri (materials, threads) RN'e taşımak",
+    "status": "pending"
   },
   {
-    "content": "Freze ve Torna ekranlarına da geri kontrol kartını ekle",
-    "status": "completed"
+    "content": "Navigasyon: bottom tabs (Hesapla, Malzeme, Takım, Geçmiş, Ayarlar) + stack",
+    "status": "pending"
   },
   {
-    "content": "Önerilen Vc için devir aralığı, önerilen f için F aralığı ve çapa göre Vc karşılaştırması",
-    "status": "completed"
+    "content": "Ortak UI bileşenleri: ResultCard, FeedCard, MachineCheckCard, MaterialPicker (RN versiyonu)",
+    "status": "pending"
   },
   {
-    "content": "testing_agent_v3 doğrulaması (iteration_8: tüm senaryolar PASS, hata yok)",
-    "status": "completed"
+    "content": "Ekranlar: Home, Freze, Torna, Matkap, Kılavuz/Diş",
+    "status": "pending"
+  },
+  {
+    "content": "Ekranlar: Malzemeler (liste+detay+özel malzeme CRUD), Takımlarım, Geçmiş, Ayarlar",
+    "status": "pending"
+  },
+  {
+    "content": "AsyncStorage ile offline kalıcılık (settings, history, custom materials, tools)",
+    "status": "pending"
+  },
+  {
+    "content": "Fontlar (Barlow Condensed, IBM Plex Sans) ve tema tokenlarının uygulanması",
+    "status": "pending"
+  },
+  {
+    "content": "İkon/splash varlıklarını mobile-transfer'dan /app/mobile/assets'e taşımak, app.json güncellemek",
+    "status": "pending"
+  },
+  {
+    "content": "eas.json oluşturmak (Android+iOS build profilleri)",
+    "status": "pending"
+  },
+  {
+    "content": "Expo web preview ile görsel doğrulama (screenshot_tool)",
+    "status": "pending"
+  },
+  {
+    "content": "testing_agent_v3 ile mobil uygulamayı test etmek",
+    "status": "pending"
   }
 ]
