@@ -163,6 +163,9 @@ export const DEFAULT_SETTINGS = {
   presetByOp: { ...AUTO_PRESET },
   manual: { maxRpm: 12000, maxFeed: 15000, powerKw: 11 },
   efficiency: 0.8,
+  // tezgâh F modu: G95 = mm/dev (devir başına), G94 = mm/dk (dakikada)
+  feedMode: 'G95',
+  maxFeedPerRev: 2,
   // takım ömrü & maliyet
   refLife: 15,
   targetLife: 30,

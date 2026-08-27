@@ -167,9 +167,26 @@ export default function HistoryPage() {
                                 <span className="rounded-theme bg-muted px-2 py-1 font-heading text-lg font-bold leading-none text-accent">
                                   {formatQty('vf', rec.outputs.vf, unitSystem)}{' '}
                                   <span className="font-body text-[10px] font-semibold text-muted-foreground">
-                                    {unitLabel('vf', unitSystem)}
+                                    {unitLabel('vf', unitSystem)} · G94
                                   </span>
                                 </span>
+                                {(() => {
+                                  const fnRec = Number.isFinite(rec.outputs.fn)
+                                    ? rec.outputs.fn
+                                    : (rec.outputs.n > 0 ? rec.outputs.vf / rec.outputs.n : NaN);
+                                  if (!Number.isFinite(fnRec)) return null;
+                                  return (
+                                    <span
+                                      className="rounded-theme bg-muted px-2 py-1 font-heading text-lg font-bold leading-none text-primary"
+                                      data-testid={`history-fn-${rec.id}`}
+                                    >
+                                      {formatQty('f', fnRec, unitSystem, { decimals: 3 })}{' '}
+                                      <span className="font-body text-[10px] font-semibold text-muted-foreground">
+                                        {unitLabel('f', unitSystem)} · G95
+                                      </span>
+                                    </span>
+                                  );
+                                })()}
                               </div>
                               <div className="mt-3 flex items-center gap-4">
                                 <button

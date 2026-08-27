@@ -12,6 +12,7 @@ import {
   Ruler,
   Timer,
   Trash2,
+  TriangleAlert,
   Upload,
   WifiOff,
 } from 'lucide-react';
@@ -32,6 +33,7 @@ import {
   SegmentedToggle,
   StatusChip,
 } from '../components/talas/Primitives';
+import { FEED_MODES } from '../lib/feed';
 import { exportAll, importAll } from '../lib/storage';
 import { formatNumber, UNIT_SYSTEMS } from '../lib/units';
 
@@ -136,6 +138,68 @@ export default function SettingsPage() {
                 ))}
               </div>
             </div>
+          </div>
+        </section>
+
+        <section aria-label="Tezgâh F modu">
+          <SectionHeading
+            eyebrow="TEZGÂH F MODU"
+            title="İlerleme birimi (G94 / G95)"
+            right={
+              <StatusChip tone={settings.feedMode === 'G94' ? 'accent' : 'ok'} testId="settings-feed-mode-chip">
+                {settings.feedMode === 'G94' ? 'mm/dk' : 'mm/dev'}
+              </StatusChip>
+            }
+          />
+          <div className="overflow-hidden rounded-theme border border-primary/50 bg-card divide-y divide-border">
+            <div className="flex items-start gap-3 bg-primary/10 px-4 py-3">
+              <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <p className="text-[11px] leading-4 text-card-foreground">
+                Tezgâhın kumandası <strong>G94</strong> modundaysa F alanına <strong>mm/dk</strong>,{' '}
+                <strong>G95</strong> modundaysa <strong>mm/dev</strong> yazılır. Aynı kesme için bu iki sayı 1.000 kat
+                farklı olabilir (örn. 1.300 mm/dk = 0,26 mm/dev). Uygulama her iki değeri birlikte gösterir; burada
+                seçtiğiniz mod sonuç kartlarında ana değer olur.
+              </p>
+            </div>
+            <div className="px-4 py-3">
+              <Eyebrow className="mb-2">Tezgâhınız hangi modda çalışıyor?</Eyebrow>
+              <SegmentedToggle
+                options={FEED_MODES.map((m) => ({ id: m.id, label: m.label }))}
+                value={settings.feedMode === 'G94' ? 'G94' : 'G95'}
+                onChange={(v) => {
+                  updateSettings({ feedMode: v });
+                  toast.success(v === 'G95' ? 'Tezgâh F modu: mm/dev (G95)' : 'Tezgâh F modu: mm/dk (G94)');
+                }}
+                ariaLabel="Tezgâh F modu"
+                testId="settings-feed-mode-toggle"
+              />
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {FEED_MODES.map((m) => (
+                  <div
+                    key={m.id}
+                    className={`rounded-theme border px-3 py-2 ${
+                      (settings.feedMode === 'G94' ? 'G94' : 'G95') === m.id
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border bg-input'
+                    }`}
+                  >
+                    <p className={`text-xs font-semibold ${(settings.feedMode === 'G94' ? 'G94' : 'G95') === m.id ? 'text-primary' : 'text-card-foreground'}`}>
+                      {m.short}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">{m.note}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <NumericField
+              id="settings-max-feed-per-rev"
+              label="Maksimum ilerleme (mm/dev)"
+              hint="Bu değer aşılırsa kırmızı kritik uyarı çıkar"
+              kind="f"
+              value={settings.maxFeedPerRev || 0}
+              onChange={(v) => updateSettings({ maxFeedPerRev: Math.max(0, v) })}
+              testId="settings-max-feed-per-rev"
+            />
           </div>
         </section>
 

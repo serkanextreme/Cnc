@@ -95,6 +95,12 @@ function formatInt(v) {
   return new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 }).format(v);
 }
 
+/** Devir başına ilerleme (mm/dev) — G95 modunda tezgâha yazılan değer. */
+export function feedPerRevFrom(vf, n) {
+  if (!(n > 0) || !Number.isFinite(vf)) return NaN;
+  return vf / n;
+}
+
 /* ------------------------------------------------------------ validasyon */
 export function evaluateRange(value, range) {
   if (!range || !Number.isFinite(value)) {
@@ -126,6 +132,7 @@ export function calcMilling({ vc, d, z, fz, ap, ae, kc = 2100, eta = 0.8, limits
     nRaw: n0,
     n: lim.n,
     vf: lim.vf,
+    fn: feedPerRevFrom(lim.vf, lim.n),
     vcEffective: lim.vcEffective,
     q,
     power: p,
@@ -147,6 +154,7 @@ export function calcTurning({ vc, d, f, ap, noseR = 0.8, kc = 2100, eta = 0.8, l
     nRaw: n0,
     n: lim.n,
     vf: lim.vf,
+    fn: feedPerRevFrom(lim.vf, lim.n),
     vcEffective: lim.vcEffective,
     q,
     power: p,
@@ -167,6 +175,7 @@ export function calcDrilling({ vc, d, f, depth, kc = 2100, eta = 0.8, limits = n
     nRaw: n0,
     n: lim.n,
     vf: lim.vf,
+    fn: feedPerRevFrom(lim.vf, lim.n),
     vcEffective: lim.vcEffective,
     q,
     power: p,
@@ -227,6 +236,7 @@ export function calcTapping({ vc, d, pitch, depth, kc = 2100, tensile = 900,
   return {
     n: lim.n,
     vf: lim.vf,
+    fn: feedPerRevFrom(lim.vf, lim.n),
     vcEffective: lim.vcEffective,
     torque,
     power,
@@ -256,6 +266,7 @@ export function calcThreadMilling({ vc, toolD, threadD, pitch, z = 3, fz, thread
   return {
     n: lim.n,
     vf: lim.vf,
+    fn: feedPerRevFrom(lim.vf, lim.n),
     vfPeriphery,
     compensation: ratio,
     vcEffective: lim.vcEffective,
@@ -310,6 +321,7 @@ export function calcThreadTurning({ vc, d, pitch, length, kc = 2100, machinabili
   return {
     n: lim.n,
     vf: lim.vf,
+    fn: feedPerRevFrom(lim.vf, lim.n),
     vcEffective: lim.vcEffective,
     passCount: count,
     totalDepth: plan.totalDepth,
@@ -486,6 +498,7 @@ export function calcChatterFree({ vc, d, z, fzTarget, ap, ae, kc = 2100, fluteLe
   return {
     n: lim.n,
     vf: lim.vf,
+    fn: feedPerRevFrom(lim.vf, lim.n),
     vcEffective: lim.vcEffective,
     rctf: factor,
     fzProgrammed,

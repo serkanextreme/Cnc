@@ -10,11 +10,13 @@ import { MachineLimitCard } from '../components/talas/MachineLimitCard';
 import { HardnessCard } from '../components/talas/HardnessCard';
 import { ToolLifeCard } from '../components/talas/ToolLifeCard';
 import { FormulaPanel, ResultCard } from '../components/talas/ResultCard';
+import { FeedCard } from '../components/talas/FeedCard';
 import {
   BottomActionBar, ClampNotice, Eyebrow, GhostButton, IconButton, NumericField,
   PrimaryButton, ScreenHeader, ScreenShell, SectionHeading, SegmentedToggle, StatusChip, Stepper,
 } from '../components/talas/Primitives';
 import { adjustForHardness, calcChatterFree, calcTrochoidalSlot, evaluateRange, HEM_AE_PRESETS } from '../lib/calc';
+import { feedFromResult, feedMetric, feedSafety, fzRangeToFnRange, normalizeFeedMode } from '../lib/feed';
 import { ChatterListener } from '../components/talas/ChatterListener';
 import { midOf, recommended, resolveLimits, TOOL_MATERIALS } from '../data/materials';
 import { buildShareText, shareText } from '../lib/records';
@@ -25,7 +27,7 @@ export default function ChatterFree() {
   const [params] = useSearchParams();
   const {
     activeMaterial, setActiveMaterialId, drafts, updateDraft, resetDraft,
-    settings, unitSystem, saveCalculation, history,
+    settings, unitSystem, saveCalculation, history, updateSettings,
   } = useApp();
   const [pickerOpen, setPickerOpen] = useState(false);
   const d = drafts.chatter;
@@ -82,12 +84,25 @@ export default function ChatterFree() {
   const vcEval = rec ? evaluateRange(d.vc, rec.vc) : { status: 'neutral', label: '—' };
   const fzEval = rec ? evaluateRange(d.fz, rec.fz) : { status: 'neutral', label: '—' };
   const hasWarn = !!(result && result.warnings.length);
-  const status = hasErrors ? 'error' : (vcEval.status === 'error' || fzEval.status === 'error')
-    ? 'error' : (hasWarn || vcEval.status === 'warn' || fzEval.status === 'warn') ? 'warn' : 'ok';
+  const feedMode = normalizeFeedMode(settings.feedMode);
+  const feed = feedFromResult(result);
+  const fnRange = rec && result
+    ? fzRangeToFnRange([rec.fz[0] * result.rctf, rec.fz[1] * result.rctf], d.z)
+    : null;
+  const feedCheck = feedSafety({
+    vf: feed.vf,
+    fn: feed.fn,
+    fnRange,
+    maxFeed: limits ? limits.maxFeed : 0,
+    maxFeedPerRev: settings.maxFeedPerRev,
+    clamped: !!(result && result.limits && result.limits.feedClamped),
+  });
+  const status = hasErrors ? 'error' : (vcEval.status === 'error' || fzEval.status === 'error' || feedCheck.level === 'critical')
+    ? 'error' : (hasWarn || vcEval.status === 'warn' || fzEval.status === 'warn' || feedCheck.level === 'warn') ? 'warn' : 'ok';
   const statusLabel = hasErrors ? 'Geçersiz giriş' : status === 'ok' ? 'Chatter-free' : 'Kontrol edin';
 
   const outputs = result ? {
-    n: result.n, vf: result.vf, vcEffective: result.vcEffective, q: result.q,
+    n: result.n, vf: result.vf, fn: result.fn, vcEffective: result.vcEffective, q: result.q,
     power: result.power, torque: result.torque, rctf: result.rctf,
     fzProgrammed: result.fzProgrammed, toothPassHz: result.toothPassHz,
     edgeUseRatio: result.edgeUseRatio, mrrGain: result.comparison.mrrGain,
@@ -275,7 +290,7 @@ export default function ChatterFree() {
           statusLabel={statusLabel}
           metrics={[
             { label: 'Devir', value: result ? formatNumber(result.n, 0) : '—', unit: unitLabel('rpm', unitSystem), tone: 'primary', testId: 'result-n' },
-            { label: 'İlerleme', value: result ? formatQty('vf', result.vf, unitSystem) : '—', unit: unitLabel('vf', unitSystem), tone: 'primary', testId: 'result-vf' },
+            { ...feedMetric({ feed, mode: feedMode, unitSystem, level: feedCheck.level, hasResult: !!result }) },
           ]}
           extras={[
             { label: 'Telafi faktörü (RCTF)', note: '1 / √(1 − (1 − 2·ae/D)²)', value: result ? formatNumber(result.rctf, 3) : '—', unit: '×', tone: 'accent', testId: 'result-rctf' },
@@ -286,6 +301,21 @@ export default function ChatterFree() {
             { label: 'İş mili gücü', note: `Verim %${Math.round(settings.efficiency * 100)}`, value: result ? formatQty('power', result.power, unitSystem) : '—', unit: unitLabel('power', unitSystem), tone: 'foreground', testId: 'result-power' },
             { label: 'Kavrama açısı', note: 'Küçük açı = düşük radyal kuvvet', value: result ? formatNumber(result.engagement, 1) : '—', unit: '°', tone: 'accent', testId: 'result-engagement' },
           ]}
+        />
+
+        <FeedCard
+          n={result ? result.n : NaN}
+          vf={feed.vf}
+          fn={feed.fn}
+          mode={feedMode}
+          onModeChange={(v) => {
+            updateSettings({ feedMode: v });
+            toast.success(v === 'G95' ? 'Tezgâh F modu: mm/dev (G95)' : 'Tezgâh F modu: mm/dk (G94)');
+          }}
+          unitSystem={unitSystem}
+          safety={feedCheck}
+          fnRange={fnRange}
+          extraNote="HEM/chatter-free'de fn, RCTF telafili fz × z değerinden gelir. Yüksek mm/dk değeri normaldir; tezgâh G95 modundaysa mm/dev karşılığını gir."
         />
 
         {result ? (

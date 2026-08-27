@@ -9,6 +9,7 @@ import { HardnessCard } from '../components/talas/HardnessCard';
 import { ToolLifeCard } from '../components/talas/ToolLifeCard';
 import { RecommendPanel } from '../components/talas/Recommend';
 import { FormulaPanel, ResultCard } from '../components/talas/ResultCard';
+import { FeedCard } from '../components/talas/FeedCard';
 import {
   BottomActionBar,
   Eyebrow,
@@ -23,6 +24,7 @@ import {
   Stepper,
 } from '../components/talas/Primitives';
 import { adjustForHardness, calcMilling, evaluateRange, worstStatus } from '../lib/calc';
+import { feedFromResult, feedMetric, feedSafety, fzRangeToFnRange, normalizeFeedMode } from '../lib/feed';
 import { midOf, recommended, resolveLimits, TOOL_MATERIALS } from '../data/materials';
 import { buildShareText, shareText } from '../lib/records';
 import { formatNumber, formatQty, formatRange, unitLabel } from '../lib/units';
@@ -32,7 +34,7 @@ export default function Milling() {
   const [params] = useSearchParams();
   const {
     activeMaterial, setActiveMaterialId, drafts, updateDraft, resetDraft,
-    settings, unitSystem, saveCalculation, history, materialById,
+    settings, unitSystem, saveCalculation, history, materialById, updateSettings,
   } = useApp();
   const [pickerOpen, setPickerOpen] = useState(false);
   const d = drafts.freze;
@@ -80,7 +82,19 @@ export default function Milling() {
   const vcEval = rec ? evaluateRange(d.vc, rec.vc) : { status: 'neutral', label: '—' };
   const fzEval = rec ? evaluateRange(d.fz, rec.fz) : { status: 'neutral', label: '—' };
   const powerOver = !!(result && limits && limits.powerKw && result.power > limits.powerKw);
-  const status = hasErrors ? 'error' : worstStatus([vcEval.status, fzEval.status, powerOver ? 'warn' : 'ok']);
+  const feedMode = normalizeFeedMode(settings.feedMode);
+  const feed = feedFromResult(result);
+  const fnRange = rec ? fzRangeToFnRange(rec.fz, d.z) : null;
+  const feedCheck = feedSafety({
+    vf: feed.vf,
+    fn: feed.fn,
+    fnRange,
+    maxFeed: limits ? limits.maxFeed : 0,
+    maxFeedPerRev: settings.maxFeedPerRev,
+    clamped: !!(result && result.limits && result.limits.feedClamped),
+  });
+  const feedStatus = feedCheck.level === 'critical' ? 'error' : feedCheck.level === 'warn' ? 'warn' : 'ok';
+  const status = hasErrors ? 'error' : worstStatus([vcEval.status, fzEval.status, feedStatus, powerOver ? 'warn' : 'ok']);
   const statusLabel = hasErrors
     ? 'Geçersiz giriş'
     : status === 'ok'
@@ -100,7 +114,7 @@ export default function Milling() {
       unitSystem,
       inputs: { ...d },
       outputs: {
-        n: result.n, vf: result.vf, vcEffective: result.vcEffective, q: result.q,
+        n: result.n, vf: result.vf, fn: result.fn, vcEffective: result.vcEffective, q: result.q,
         power: result.power, torque: result.torque, hm: result.hm,
       },
     });
@@ -115,7 +129,7 @@ export default function Milling() {
     const text = buildShareText(
       {
         op: 'freze', materialCode: activeMaterial.code, inputs: d,
-        outputs: { n: result.n, vf: result.vf, vcEffective: result.vcEffective, q: result.q, power: result.power, torque: result.torque },
+        outputs: { n: result.n, vf: result.vf, fn: result.fn, vcEffective: result.vcEffective, q: result.q, power: result.power, torque: result.torque },
       },
       unitSystem,
       activeMaterial.name,
@@ -261,11 +275,13 @@ export default function Milling() {
               testId: 'result-n',
             },
             {
-              label: 'İlerleme',
-              value: result ? formatQty('vf', result.vf, unitSystem) : '—',
-              unit: unitLabel('vf', unitSystem),
-              tone: 'primary',
-              testId: 'result-vf',
+              ...feedMetric({
+                feed,
+                mode: feedMode,
+                unitSystem,
+                level: feedCheck.level,
+                hasResult: !!result,
+              }),
             },
           ]}
           extras={[
@@ -310,6 +326,21 @@ export default function Milling() {
               testId: 'result-hm',
             },
           ]}
+        />
+
+        <FeedCard
+          n={result ? result.n : NaN}
+          vf={feed.vf}
+          fn={feed.fn}
+          mode={feedMode}
+          onModeChange={(v) => {
+            updateSettings({ feedMode: v });
+            toast.success(v === 'G95' ? 'Tezgâh F modu: mm/dev (G95)' : 'Tezgâh F modu: mm/dk (G94)');
+          }}
+          unitSystem={unitSystem}
+          safety={feedCheck}
+          fnRange={fnRange}
+          extraNote={`Frezede fn = fz × z = ${formatQty('fz', d.fz, unitSystem)} × ${d.z} ağız. Tezgâh G94 modundaysa mm/dk, G95 modundaysa mm/dev değerini gir.`}
         />
 
         {rec ? (

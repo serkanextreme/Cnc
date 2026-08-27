@@ -9,6 +9,7 @@ import { HardnessCard } from '../components/talas/HardnessCard';
 import { ToolLifeCard } from '../components/talas/ToolLifeCard';
 import { RecommendPanel } from '../components/talas/Recommend';
 import { FormulaPanel, ResultCard } from '../components/talas/ResultCard';
+import { FeedCard } from '../components/talas/FeedCard';
 import {
   BottomActionBar,
   Eyebrow,
@@ -23,6 +24,7 @@ import {
   Stepper,
 } from '../components/talas/Primitives';
 import { adjustForHardness, calcDrilling, evaluateRange, worstStatus } from '../lib/calc';
+import { feedFromResult, feedMetric, feedSafety, normalizeFeedMode } from '../lib/feed';
 import { COOLANT_OPTIONS, coolantLabel, midOf, recommended, resolveLimits, TOOL_MATERIALS } from '../data/materials';
 import { buildShareText, shareText } from '../lib/records';
 import { formatNumber, formatQty, formatRange, formatSeconds, unitLabel } from '../lib/units';
@@ -32,7 +34,7 @@ export default function Drilling() {
   const [params] = useSearchParams();
   const {
     activeMaterial, setActiveMaterialId, drafts, updateDraft, resetDraft,
-    settings, unitSystem, saveCalculation, history,
+    settings, unitSystem, saveCalculation, history, updateSettings,
   } = useApp();
   const [pickerOpen, setPickerOpen] = useState(false);
   const d = drafts.matkap;
@@ -77,7 +79,19 @@ export default function Drilling() {
   const fEval = rec ? evaluateRange(d.f, rec.f) : { status: 'neutral', label: '—' };
   const deepHole = d.depth > d.d * 3;
   const powerOver = !!(result && limits && limits.powerKw && result.power > limits.powerKw);
-  const status = hasErrors ? 'error' : worstStatus([vcEval.status, fEval.status, powerOver ? 'warn' : 'ok']);
+  const feedMode = normalizeFeedMode(settings.feedMode);
+  const feed = feedFromResult(result);
+  const fnRange = rec ? rec.f : null;
+  const feedCheck = feedSafety({
+    vf: feed.vf,
+    fn: feed.fn,
+    fnRange,
+    maxFeed: limits ? limits.maxFeed : 0,
+    maxFeedPerRev: settings.maxFeedPerRev,
+    clamped: !!(result && result.limits && result.limits.feedClamped),
+  });
+  const feedStatus = feedCheck.level === 'critical' ? 'error' : feedCheck.level === 'warn' ? 'warn' : 'ok';
+  const status = hasErrors ? 'error' : worstStatus([vcEval.status, fEval.status, feedStatus, powerOver ? 'warn' : 'ok']);
   const statusLabel = hasErrors ? 'Geçersiz giriş' : status === 'ok' ? 'Uygun' : 'Kontrol edin';
 
   const handleSave = () => {
@@ -93,7 +107,7 @@ export default function Drilling() {
       unitSystem,
       inputs: { ...d },
       outputs: {
-        n: result.n, vf: result.vf, vcEffective: result.vcEffective, q: result.q,
+        n: result.n, vf: result.vf, fn: result.fn, vcEffective: result.vcEffective, q: result.q,
         power: result.power, torque: result.torque, cycleSeconds: result.cycleSeconds,
       },
     });
@@ -109,7 +123,7 @@ export default function Drilling() {
       {
         op: 'matkap', materialCode: activeMaterial.code, inputs: d,
         outputs: {
-          n: result.n, vf: result.vf, vcEffective: result.vcEffective, q: result.q,
+          n: result.n, vf: result.vf, fn: result.fn, vcEffective: result.vcEffective, q: result.q,
           power: result.power, torque: result.torque, cycleSeconds: result.cycleSeconds,
         },
       },
@@ -260,11 +274,13 @@ export default function Drilling() {
               testId: 'result-n',
             },
             {
-              label: 'İlerleme',
-              value: result ? formatQty('vf', result.vf, unitSystem) : '—',
-              unit: unitLabel('vf', unitSystem),
-              tone: 'primary',
-              testId: 'result-vf',
+              ...feedMetric({
+                feed,
+                mode: feedMode,
+                unitSystem,
+                level: feedCheck.level,
+                hasResult: !!result,
+              }),
             },
           ]}
           extras={[
@@ -301,6 +317,21 @@ export default function Drilling() {
               testId: 'result-torque',
             },
           ]}
+        />
+
+        <FeedCard
+          n={result ? result.n : NaN}
+          vf={feed.vf}
+          fn={feed.fn}
+          mode={feedMode}
+          onModeChange={(v) => {
+            updateSettings({ feedMode: v });
+            toast.success(v === 'G95' ? 'Tezgâh F modu: mm/dev (G95)' : 'Tezgâh F modu: mm/dk (G94)');
+          }}
+          unitSystem={unitSystem}
+          safety={feedCheck}
+          fnRange={fnRange}
+          extraNote="Matkapta katalog ilerlemesi (f) mm/dev cinsindendir. Tezgâh G94 modundaysa mm/dk değerini, G95 modundaysa mm/dev değerini gir."
         />
 
         <section

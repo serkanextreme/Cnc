@@ -1,18 +1,42 @@
 [
   {
-    "content": "Phase 5: Trokoidal kanal hesabı (paso sayısı, kat sayısı, takım yolu, süre, hacim) — motor + POC 16/16",
+    "content": "lib/feed.js oluştur (FEED_MODES, feedFromResult, gcodeLine, feedSafety, feedMetric)",
     "status": "completed"
   },
   {
-    "content": "Phase 5: Chatter-Free ekranına 'Trokoidal Kanal' bölümü",
+    "content": "lib/calc.js: tüm sonuçlara fn = vf/n ekle (mevcut alanlar korunur)",
     "status": "completed"
   },
   {
-    "content": "Phase 5: Mikrofonla titreşim dinleme (Web Audio FFT) + tespit edilen frekansı kararlı devir önerisine bağlama",
+    "content": "DEFAULT_SETTINGS: feedMode='G95', maxFeedPerRev=2",
     "status": "completed"
   },
   {
-    "content": "Phase 5: testing_agent_v3 testi — 21/21 geçti, hata yok",
+    "content": "ResultCard MetricCell'e `sub` satırı desteği ekle",
+    "status": "completed"
+  },
+  {
+    "content": "FeedCard.js: G94/G95 çift gösterim + G-kod kopyala + kritik uyarı",
+    "status": "completed"
+  },
+  {
+    "content": "Milling/Turning/Drilling/Threading/ChatterFree sayfalarına entegre et",
+    "status": "completed"
+  },
+  {
+    "content": "Settings.js: Tezgâh F modu + maksimum mm/dev alanı",
+    "status": "completed"
+  },
+  {
+    "content": "Geçmiş/paylaşım metinlerine G94+G95 çift bilgi ekle",
+    "status": "completed"
+  },
+  {
+    "content": "esbuild + screenshot doğrulama",
+    "status": "completed"
+  },
+  {
+    "content": "testing_agent_v3 frontend doğrulaması (34/34 PASS, hata yok)",
     "status": "completed"
   }
 ]

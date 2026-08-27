@@ -9,6 +9,7 @@ import { HardnessCard } from '../components/talas/HardnessCard';
 import { ToolLifeCard } from '../components/talas/ToolLifeCard';
 import { RecommendPanel } from '../components/talas/Recommend';
 import { FormulaPanel, ResultCard } from '../components/talas/ResultCard';
+import { FeedCard } from '../components/talas/FeedCard';
 import {
   BottomActionBar,
   Eyebrow,
@@ -22,6 +23,7 @@ import {
   SegmentedToggle,
 } from '../components/talas/Primitives';
 import { adjustForHardness, calcTurning, evaluateRange, worstStatus } from '../lib/calc';
+import { feedFromResult, feedMetric, feedSafety, normalizeFeedMode } from '../lib/feed';
 import { midOf, recommended, resolveLimits } from '../data/materials';
 import { buildShareText, shareText } from '../lib/records';
 import { formatNumber, formatQty, formatRange, unitLabel } from '../lib/units';
@@ -40,7 +42,7 @@ export default function Turning() {
   const [params] = useSearchParams();
   const {
     activeMaterial, setActiveMaterialId, drafts, updateDraft, resetDraft,
-    settings, unitSystem, saveCalculation, history,
+    settings, unitSystem, saveCalculation, history, updateSettings,
   } = useApp();
   const [pickerOpen, setPickerOpen] = useState(false);
   const d = drafts.torna;
@@ -86,9 +88,21 @@ export default function Turning() {
   const fEval = rec ? evaluateRange(d.f, rec.f) : { status: 'neutral', label: '—' };
   const raOver = !!(result && d.targetRa > 0 && result.ra - d.targetRa > 0.005);
   const powerOver = !!(result && limits && limits.powerKw && result.power > limits.powerKw);
+  const feedMode = normalizeFeedMode(settings.feedMode);
+  const feed = feedFromResult(result);
+  const fnRange = rec ? rec.f : null;
+  const feedCheck = feedSafety({
+    vf: feed.vf,
+    fn: feed.fn,
+    fnRange,
+    maxFeed: limits ? limits.maxFeed : 0,
+    maxFeedPerRev: settings.maxFeedPerRev,
+    clamped: !!(result && result.limits && result.limits.feedClamped),
+  });
+  const feedStatus = feedCheck.level === 'critical' ? 'error' : feedCheck.level === 'warn' ? 'warn' : 'ok';
   const status = hasErrors
     ? 'error'
-    : worstStatus([vcEval.status, fEval.status, raOver ? 'warn' : 'ok', powerOver ? 'warn' : 'ok']);
+    : worstStatus([vcEval.status, fEval.status, feedStatus, raOver ? 'warn' : 'ok', powerOver ? 'warn' : 'ok']);
   const statusLabel = hasErrors ? 'Geçersiz giriş' : status === 'ok' ? 'Uygun' : 'Kontrol edin';
 
   const handleSave = () => {
@@ -104,7 +118,7 @@ export default function Turning() {
       unitSystem,
       inputs: { ...d },
       outputs: {
-        n: result.n, vf: result.vf, vcEffective: result.vcEffective, q: result.q,
+        n: result.n, vf: result.vf, fn: result.fn, vcEffective: result.vcEffective, q: result.q,
         power: result.power, torque: result.torque, ra: result.ra,
       },
     });
@@ -120,7 +134,7 @@ export default function Turning() {
       {
         op: 'torna', materialCode: activeMaterial.code, inputs: d,
         outputs: {
-          n: result.n, vf: result.vf, vcEffective: result.vcEffective, q: result.q,
+          n: result.n, vf: result.vf, fn: result.fn, vcEffective: result.vcEffective, q: result.q,
           power: result.power, torque: result.torque, ra: result.ra,
         },
       },
@@ -265,11 +279,13 @@ export default function Turning() {
               testId: 'result-n',
             },
             {
-              label: 'İlerleme',
-              value: result ? formatQty('vf', result.vf, unitSystem) : '—',
-              unit: unitLabel('vf', unitSystem),
-              tone: 'foreground',
-              testId: 'result-vf',
+              ...feedMetric({
+                feed,
+                mode: feedMode,
+                unitSystem,
+                level: feedCheck.level,
+                hasResult: !!result,
+              }),
             },
           ]}
           extras={[
@@ -314,6 +330,21 @@ export default function Turning() {
               testId: 'result-power',
             },
           ]}
+        />
+
+        <FeedCard
+          n={result ? result.n : NaN}
+          vf={feed.vf}
+          fn={feed.fn}
+          mode={feedMode}
+          onModeChange={(v) => {
+            updateSettings({ feedMode: v });
+            toast.success(v === 'G95' ? 'Tezgâh F modu: mm/dev (G95)' : 'Tezgâh F modu: mm/dk (G94)');
+          }}
+          unitSystem={unitSystem}
+          safety={feedCheck}
+          fnRange={fnRange}
+          extraNote="Tornada kumanda genelde G95 (mm/dev) modundadır. Katalog ilerlemesi f zaten mm/dev cinsindendir."
         />
 
         {result && result.feedForTargetRa ? (

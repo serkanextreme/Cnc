@@ -5,7 +5,7 @@ Tests all scenarios from BACKEND-CF requirements
 import requests
 import sys
 
-BASE_URL = "https://metal-cutting-app-1.preview.emergentagent.com/api"
+BASE_URL = "https://feed-rate-fix.preview.emergentagent.com/api"
 
 class Colors:
     GREEN = '\033[92m'

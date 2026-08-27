@@ -122,7 +122,12 @@ export function buildShareText(rec, unitSystem, materialName) {
   }
   lines.push('—');
   lines.push(`Devir: ${formatNumber(o.n, 0)} ${L('rpm')}`);
-  lines.push(`İlerleme: ${formatQty('vf', o.vf, unitSystem)} ${L('vf')}`);
+  lines.push(`İlerleme (G94): ${formatQty('vf', o.vf, unitSystem)} ${L('vf')}`);
+  const fnShare = Number.isFinite(o.fn) ? o.fn : (o.n > 0 ? o.vf / o.n : NaN);
+  if (Number.isFinite(fnShare)) {
+    lines.push(`İlerleme (G95): ${formatQty('f', fnShare, unitSystem, { decimals: 3 })} ${L('f')}`);
+  }
+  lines.push('! Tezgâhın F modunu kontrol et: G94 = mm/dk, G95 = mm/dev');
   lines.push(`Efektif Vc: ${formatQty('vc', o.vcEffective, unitSystem)} ${L('vc')}`);
   if (Number.isFinite(o.q)) lines.push(`Talaş hacmi: ${formatQty('q', o.q, unitSystem)} ${L('q')}`);
   if (Number.isFinite(o.power)) lines.push(`Güç: ${formatQty('power', o.power, unitSystem)} ${L('power')}`);

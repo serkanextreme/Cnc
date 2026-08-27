@@ -7,6 +7,7 @@ import { MaterialPickerDrawer, MaterialSummaryCard } from '../components/talas/M
 import { MachineLimitCard } from '../components/talas/MachineLimitCard';
 import { ToolLifeCard } from '../components/talas/ToolLifeCard';
 import { FormulaPanel, ResultCard } from '../components/talas/ResultCard';
+import { FeedCard } from '../components/talas/FeedCard';
 import {
   BottomActionBar,
   Eyebrow,
@@ -28,6 +29,7 @@ import {
   evaluateRange,
   threadingPassCount,
 } from '../lib/calc';
+import { feedFromResult, feedMetric, feedSafety, normalizeFeedMode } from '../lib/feed';
 import { midOf, recommended, resolveLimits, TOOL_MATERIALS } from '../data/materials';
 import {
   DIS_MODES,
@@ -47,7 +49,7 @@ export default function Threading() {
   const [params] = useSearchParams();
   const {
     activeMaterial, setActiveMaterialId, drafts, updateDraft, resetDraft,
-    settings, unitSystem, saveCalculation, history,
+    settings, unitSystem, saveCalculation, history, updateSettings,
   } = useApp();
   const [pickerOpen, setPickerOpen] = useState(false);
   const d = drafts.dis;
@@ -114,7 +116,24 @@ export default function Threading() {
   }, [d, activeMaterial, settings.efficiency, limits, hasErrors, selectedThread]);
 
   const vcEval = vcRange ? evaluateRange(d.vc, vcRange) : { status: 'neutral', label: '—' };
-  const status = hasErrors ? 'error' : vcEval.status === 'error' ? 'error' : vcEval.status;
+  const feedMode = normalizeFeedMode(settings.feedMode);
+  const feed = feedFromResult(result);
+  // Kılavuz ve torna dişinde devir başına ilerleme DAİMA diş adımına eşit olmalıdır.
+  const fnRange = d.mode === 'frezeleme' || !(d.pitch > 0)
+    ? null
+    : [d.pitch * 0.98, d.pitch * 1.02];
+  const feedCheck = feedSafety({
+    vf: feed.vf,
+    fn: feed.fn,
+    fnRange,
+    maxFeed: limits ? limits.maxFeed : 0,
+    maxFeedPerRev: d.mode === 'frezeleme' ? settings.maxFeedPerRev : 0,
+    clamped: !!(result && result.limits && result.limits.feedClamped),
+  });
+  const status = hasErrors ? 'error'
+    : feedCheck.level === 'critical' ? 'error'
+      : vcEval.status === 'error' ? 'error'
+        : feedCheck.level === 'warn' ? 'warn' : vcEval.status;
   const statusLabel = hasErrors ? 'Geçersiz giriş' : status === 'ok' ? 'Uygun' : 'Kontrol edin';
 
   const applyThread = (t) => {
@@ -132,6 +151,7 @@ export default function Threading() {
     ? {
       n: result.n,
       vf: result.vf,
+      fn: result.fn,
       vcEffective: result.vcEffective,
       torque: result.torque,
       power: result.power,
@@ -181,12 +201,15 @@ export default function Threading() {
   };
 
   /* ------------------------------------------------------- sonuç metrikleri */
+  const feedM = feedMetric({
+    feed, mode: feedMode, unitSystem, level: feedCheck.level, hasResult: !!result,
+  });
   const metrics = [];
   const extras = [];
   if (d.mode === 'kilavuz') {
     metrics.push(
       { label: 'Devir', value: result ? formatNumber(result.n, 0) : '—', unit: unitLabel('rpm', unitSystem), tone: 'primary', testId: 'result-n' },
-      { label: 'İlerleme', value: result ? formatQty('vf', result.vf, unitSystem) : '—', unit: unitLabel('vf', unitSystem), tone: 'primary', testId: 'result-vf' },
+      { ...feedM },
     );
     extras.push(
       { label: 'Kılavuz matkap çapı', note: `%${d.engagement} diş dolgunluğu`, value: result ? formatQty('length', result.tapDrill, unitSystem) : '—', unit: unitLabel('length', unitSystem), tone: 'accent', testId: 'result-tapdrill' },
@@ -198,7 +221,7 @@ export default function Threading() {
   } else if (d.mode === 'frezeleme') {
     metrics.push(
       { label: 'Devir', value: result ? formatNumber(result.n, 0) : '—', unit: unitLabel('rpm', unitSystem), tone: 'primary', testId: 'result-n' },
-      { label: 'Merkez ilerlemesi', value: result ? formatQty('vf', result.vf, unitSystem) : '—', unit: unitLabel('vf', unitSystem), tone: 'primary', testId: 'result-vf' },
+      { ...feedM, label: `Merkez ilerlemesi (${feedMode})` },
     );
     extras.push(
       { label: 'Çevresel ilerleme', note: 'Vf = fz × z × n', value: result ? formatQty('vf', result.vfPeriphery, unitSystem) : '—', unit: unitLabel('vf', unitSystem), tone: 'accent', testId: 'result-vf-periphery' },
@@ -213,7 +236,7 @@ export default function Threading() {
       { label: 'Paso sayısı', value: result ? formatNumber(result.passCount, 0) : '—', unit: 'paso', tone: 'primary', testId: 'result-passes' },
     );
     extras.push(
-      { label: 'İlerleme', note: 'Vf = adım × devir', value: result ? formatQty('vf', result.vf, unitSystem) : '—', unit: unitLabel('vf', unitSystem), tone: 'accent', testId: 'result-vf' },
+      { label: feedM.label, note: feedM.sub || 'Vf = adım × devir', value: feedM.value, unit: feedM.unit, tone: feedM.tone === 'destructive' ? 'destructive' : 'accent', testId: 'result-vf' },
       { label: 'Toplam diş derinliği', note: d.internal ? 'H1 = 0,5413 × P' : 'h = 0,6134 × P', value: result ? formatQty('length', result.totalDepth, unitSystem) : '—', unit: unitLabel('length', unitSystem), tone: 'foreground', testId: 'result-total-depth' },
       { label: 'İlk / son paso', note: 'Degresif (sabit talaş alanı)', value: result ? `${formatQty('length', result.firstPass, unitSystem)} / ${formatQty('length', result.lastPass, unitSystem)}` : '—', unit: unitLabel('length', unitSystem), tone: 'foreground', testId: 'result-pass-depths' },
       { label: 'Çevrim süresi', note: 'Tüm pasolar + dönüş', value: result ? formatSeconds(result.cycleSeconds) : '—', unit: '', tone: 'accent', testId: 'result-cycle' },
@@ -527,6 +550,25 @@ export default function Threading() {
           statusLabel={statusLabel}
           metrics={metrics}
           extras={extras}
+        />
+
+        <FeedCard
+          n={result ? result.n : NaN}
+          vf={feed.vf}
+          fn={feed.fn}
+          mode={feedMode}
+          onModeChange={(v) => {
+            updateSettings({ feedMode: v });
+            toast.success(v === 'G95' ? 'Tezgâh F modu: mm/dev (G95)' : 'Tezgâh F modu: mm/dk (G94)');
+          }}
+          unitSystem={unitSystem}
+          safety={feedCheck}
+          fnRange={fnRange}
+          extraNote={
+            d.mode === 'frezeleme'
+              ? 'Diş frezesinde merkez ilerlemesi helis telafisiyle hesaplanır.'
+              : 'Diş açmada devir başına ilerleme DAİMA diş adımına eşittir (G95 F = adım). G94 modunda F = adım × devir.'
+          }
         />
 
         {d.mode === 'torna' && result ? (

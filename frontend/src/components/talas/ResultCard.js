@@ -10,7 +10,7 @@ const VALUE_TONES = {
   success: 'text-success',
 };
 
-function MetricCell({ label, value, unit, tone = 'foreground', testId, className = '' }) {
+function MetricCell({ label, value, unit, sub, subTone = 'muted', tone = 'foreground', testId, className = '' }) {
   return (
     <div className={`px-4 py-4 ${className}`}>
       <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
@@ -22,6 +22,14 @@ function MetricCell({ label, value, unit, tone = 'foreground', testId, className
         {value}
       </p>
       <p className="mt-1 text-xs font-semibold text-card-foreground">{unit}</p>
+      {sub ? (
+        <p
+          className={`mt-1 text-[11px] font-semibold leading-4 ${subTone === 'destructive' ? 'text-destructive' : 'text-muted-foreground'}`}
+          data-testid={testId ? `${testId}-sub` : undefined}
+        >
+          {sub}
+        </p>
+      ) : null}
     </div>
   );
 }
