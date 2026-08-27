@@ -13,6 +13,13 @@ Mobile Agent sohbetinde bu klasörü ekleyip aşağıdaki prompt'u kullanın.
 | `lib/materials.js` / `lib/threads.js` | Katalog yardımcıları (arama, öneri aralıkları, presetler) |
 | `design-tokens.json` | Renk/tipografi/yerleşim tokenları (web ile birebir aynı görünüm için) |
 | `test_core*.py` | **279 doğrulama testi** — motorun referans değerleri (Freze 3.714/1.188, Torna 1.146/252, Matkap 2.546/407/4,4 sn, M10 kılavuz matkabı 8,54 mm, RCTF 1,667) |
+| `app.json` | **Hazır Expo config** — icon, splash, adaptive-icon, mikrofon izinleri (chatter-free için) tanımlı. Proje köküne olduğu gibi kopyalanabilir |
+| `assets/icon.png` | 1024×1024 uygulama ikonu — CNC freze başlığı + talaş kaldırma motifi (amber #F4B942 + teal #55C6C3, koyu zemin) |
+| `assets/adaptive-icon.png` | 1024×1024 şeffaf Android adaptive-icon ön katmanı (güvenli alan içinde ölçeklendi) |
+| `assets/splash.png` | 1284×2778 açılış ekranı — motif + "TALAŞ" wordmark + alt başlık |
+| `assets/favicon.png` | Expo web favicon'u |
+
+> İkon/splash görselleri `generate_icons.py` betiği ile üretildi (PIL/Pillow, saf Python — vektör bağımlılığı yok). Marka motifini değiştirmek isterseniz bu dosyayı düzenleyip yeniden çalıştırabilirsiniz: `python3 mobile-transfer/generate_icons.py`
 
 ## Mobile Agent'a verilecek prompt (kopyala–yapıştır)
 > Ekli `mobile-transfer` klasöründeki hazır hesap motorunu (`lib/calc.js`), birim

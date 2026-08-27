@@ -3,27 +3,30 @@
 ## 1. Objectives
 - ZIP içindeki **7 ekranlık UI tasarımını 1:1 koruyarak** (renk tokenları, tipografi, ikon dili, mobil layout) çalışan bir mobil web uygulaması (PWA) yapmak.
 - **Offline-first**: İnternet olmadan çalışacak; materyal kütüphanesi, geçmiş, favoriler, ayarlar, makine profilleri cihazda saklanacak.
-- Freze/Torna/Matkap/Diş/Chatter-Free için canlı hesap: **n (RPM), Vf/feed, Vc doğrulama + Q/MRR, güç (kW), tork (Nm), çevrim süresi, Ra**.
+- Freze/Torna/Matkap/Diş/Chatter-Free/Trokoidal için canlı hesap: **n (RPM), Vf/feed, Vc doğrulama + Q/MRR, güç (kW), tork (Nm), çevrim süresi, Ra**.
 - **Hazır malzeme kütüphanesi** + kullanıcı **kendi malzemesini ekle/düzenle/sil**.
 - **Birim sistemi seçimi**: Metrik (varsayılan) + Imperial (SFM/IPM/IPR) toggle.
 - **Makine limiti**: Varsayılan otomatik preset; checkbox açılırsa manuel limit girişi aktif.
+- **Mobil taşınabilirlik**: Hesap motoru/DB, gelecekte React Native/Expo uygulamasına taşınacak şekilde paketlenmiş olacak.
+- **Mobil uygulama varlıkları**: React Native/Expo için offline paket içinde **ikon + splash** hazır olacak.
 
 - ✅ **P0 KRİTİK (TAMAMLANDI, Rev-2): İlerleme (F) birim netliği + tezgâha uygun format**
   - Her operasyonda **G94 (mm/dk) ve G95 (mm/dev)** ilerleme değerleri **aynı anda** gösterilir.
-  - Tezgâhın F okuma modu artık **operasyon başına** ayarlanır (Freze/Matkap/Chatter genelde G94, Torna/Diş genelde G95).
-  - “Tezgâha girilecek F” kartında **makineye yazılacak ham değer** gösterilir (örn. **F1188 / F407** gibi tam sayı mm/dk; G95’te **F0.320** gibi noktalı ondalık).
-  - Yanlış mod/yanlış değer riskini azaltmak için **mm/dev tabanlı güvenlik uyarıları** + **kopyalanabilir G-kod satırı**.
+  - Tezgâhın F okuma modu artık **operasyon başına** ayarlanır.
+  - “Tezgâha girilecek F” kartında **makineye yazılacak ham değer** gösterilir.
 
 - ✅ **P0 KRİTİK (TAMAMLANDI, Rev-3): Tezgâh S/F geri kontrol + matkapta mm/diş desteği (katalog uyumu)**
-  - **Tezgâhtan geri kontrol**: Tezgâhta görülen **S (devir)** ve **F** girilerek bunların gerçek karşılığı olan **Vc (SMM), f (mm/dev), fz (mm/diş), Vf** hesaplanır.
-  - **Matkapta diş başına ilerleme**: Matkapta kataloglar/tablolar sıkça **mm/diş (feed per tooth)** verdiği için **fz girişi** desteklenir.
-  - **Ağız (dudak) sayısı**: Matkapta varsayılan **z=2**; böylece **f(mm/dev) = fz × z** netleşir.
-  - **Vc farkı açıklaması**: Ø10 @ 2500 dev/dk için Vc = 78,5 m/dk; kullanıcıda görülen 55,2 m/dk ≈ Ø7 efektif çap karşılığı olabilir. Bu, formül hatası değil **çap/efektif çap farkı**dır.
+  - Tezgâhtaki **S (devir)** ve **F** girilerek **Vc, f, fz, Vf** geri hesaplanır.
+  - Matkapta katalog uyumu için **fz girişi** ve **z (dudak) sayısı** desteklenir.
 
 - ✅ **P0 KRİTİK (TAMAMLANDI, Rev-4): “Tezgâhtan Geri Kontrol” kartı 5 ekranın tamamında**
-  - “Tezgâhta yazan S / F ne demek?” kartı artık **Freze / Torna / Matkap / Kılavuz-Diş / Chatter-Free** ekranlarının hepsinde var.
-  - Kılavuz/Diş’te kılavuz ve diş tornalama modunda **f = adım** kuralı için önerilen aralık **[adım×0,98, adım×1,02]** olarak kontrol edilir.
-  - Chatter-Free’de tezgâhta koşan fz’nin **RCTF telafili** olduğu netleştirilir; apply akışı **fz_catalog = fz_machine / RCTF** dönüşümü yaparak “çift telafi”yi önler.
+  - Kart artık **Freze / Torna / Matkap / Kılavuz-Diş / Chatter-Free** ekranlarının hepsinde vardır.
+
+- ✅ **P0 (TAMAMLANDI, Rev-5): Mobile/Expo app.json + ikon/splash paketinin hazırlanması**
+  - `/app/mobile-transfer` içine **Expo uyumlu `app.json`** eklendi.
+  - Aynı klasöre **icon / adaptive-icon / splash / favicon** üretildi.
+  - Üretim için dış bağımlılık olmadan çalışan `generate_icons.py` (PIL/Pillow) eklendi.
+  - iOS/Android için **mikrofon izinleri** (chatter-free modülü) `app.json` içinde tanımlandı.
 
 ---
 
@@ -68,115 +71,80 @@ Not: Export/import, TR sayı formatı, uyarı/validasyon tutarlılığı vb. iyi
 
 ---
 
+### Phase 4 — Mobile Transfer Paketinin Stabilizasyonu ✅
+**Amaç:** Web/PWA’daki çekirdek hesap mantığının React Native’e taşınabilir şekilde senkron kalması ve mobil varlıkların hazır olması.
+
+Kapsam
+- `lib/calc.js`, `lib/feed.js`, `lib/units.js` ve `data/*.json` dosyalarının `/app/mobile-transfer` içine senkronlanması ✅
+- Mobil tasarım tokenları `design-tokens.json` ✅
+- **Expo config + ikon/splash varlıkları** ✅
+
+Deliverables
+- `/app/mobile-transfer/app.json` (ikon/splash/adaptive icon, izinler)
+- `/app/mobile-transfer/assets/*` (icon/adaptive-icon/splash/favicon)
+- `/app/mobile-transfer/generate_icons.py` ile yeniden üretilebilir tasarım
+
+---
+
 ## 3. Next Actions
 
 ### P0 KRİTİK — “İlerleme (F) Birim Netliği” ✅ TAMAMLANDI (Rev-2)
-**Hedef:** Tezgâhta G94/G95 karışıklığı ve frezede `0.160` gibi mm/dev değerinin **CNC tarafından okunmaması / yanlış anlaşılması** nedeniyle kırık takım riskini azaltmak; frezede **F1188 / F407** gibi **tam sayı mm/dk** kullanımını netleştirmek.
+**Hedef:** Tezgâhta G94/G95 karışıklığı riskini azaltmak.
 
-#### Tespit / Kök neden
-- Hesaplar doğruydu; sorun **ana gösterim ve tezgâha uygun formatın** freze için yanlış modda (G95) öne çıkarılmasıydı.
-- Freze ekranında operatör beklentisi: **mm/dk (G94) tam sayı**.
+Kararlar (uygulandı)
+- İlerleme iki değer birlikte gösterilir: **G94 (mm/dk)** + **G95 (mm/dev)**
+- Operasyon bazlı varsayılanlar doğru atanır
+- Tezgâha girilecek F değeri ham formatta (G94 tam sayı; G95 noktalı)
 
-#### Kararlar (uygulandı)
-- İlerleme **iki değer birlikte** gösterilir:
-  - `G94` → **mm/dk (Vf)**
-  - `G95` → **mm/dev (fn)**
-- Tezgâh F modu artık **operasyon başına**:
-  - **Freze = G94**, **Matkap = G94**, **Chatter-free = G94**
-  - **Torna = G95**, **Kılavuz/Diş = G95**
-- “Tezgâha girilecek F” kartındaki değerler **makineye yazılacak ham formatta**:
-  - G94: **grup ayırıcısız**, metrikte **tam sayı** (örn. `1188`, `407`)
-  - G95: ondalık **NOKTA** ile (örn. `0.320`)
-- Ayarlar ekranındaki tek global toggle kaldırıldı; yerine **5 ayrı operasyon satırı** eklendi.
-
-#### Uygulanan işler (kod karşılığı)
-1. ✅ `src/lib/feed.js`
-   - `FEED_MODE_OPS`, `resolveFeedMode(settings, op)`, `machineFeedText(...)`
-   - `feedFromResult`, `gcodeLine` (ondalık nokta), `feedSafety`, `feedMetric`, `fzRangeToFnRange`
-2. ✅ `src/context/AppContext.js`
-   - `feedModeByOp`
-   - `setFeedModeForOp(op, mode)`
-3. ✅ `src/data/materials.js` (`DEFAULT_SETTINGS`)
-   - `feedModeByOp` varsayılanları (Freze/Matkap/Chatter=G94, Torna/Diş=G95)
-   - `feedMode` legacy alanı korunur
-4. ✅ `src/components/talas/FeedCard.js`
-   - Ham değer gösterimi (`1188`, `407`, `0.320`)
-   - “TEZGÂHA BUNU GİR” vurgusu
-   - Ekran-bazlı ayar notu
-5. ✅ Sayfa entegrasyonları
-   - `pages/Milling.js`, `Turning.js`, `Drilling.js`, `Threading.js`, `ChatterFree.js`
-6. ✅ `pages/Settings.js`
-   - 5 ayrı satır: Freze/Matkap/Torna/Kılavuz-Diş/Chatter-free
-7. ✅ Senkron
-   - `mobile-transfer/lib` içine `calc.js`, `feed.js`, `materials.js` senkronize edildi
-
-#### Doğrulama / test sonucu
-- ✅ `testing_agent_v3`: `/app/test_reports/iteration_7.json`
-- ✅ 20/20 PASS, regresyon yok
+Doğrulama
+- ✅ `testing_agent_v3`: `/app/test_reports/iteration_7.json` → PASS
 
 ---
 
 ### P0 KRİTİK — “Tezgâhtan Geri Kontrol + Matkap mm/diş” ✅ TAMAMLANDI (Rev-3)
-**Hedef:** Sahadaki gerçek tezgâh değerleri (S/F) ile uygulama girişleri arasında **birim/yorum farkını** anında yakalamak; özellikle matkapta katalogların **mm/diş** verdiği durumda hatalı yarım ilerlemeyi engellemek.
+**Hedef:** Sahadaki gerçek tezgâh değerleriyle uygulama hesaplarının anlam eşlemesini yapmak.
 
-#### Uygulanan işler (kod karşılığı)
-1. ✅ `src/components/talas/MachineCheckCard.js`
-   - S/F → Vc, f, fz, Vf
-   - Önerilen aralık rozetleri
-   - “Aynı devirde çapa göre Vc” karşılaştırması (0.7D / D / 1.3D)
-   - “Bu değerleri hesaba uygula” butonu
-2. ✅ `pages/Drilling.js`
-   - Matkap `z` stepper (varsayılan 2)
-   - `feedInput` (mm/dev ↔ mm/diş)
-   - Sonuç kartında `fz` satırı
-3. ✅ `src/data/materials.js`
-   - `DEFAULT_DRAFTS.matkap`: `z: 2`, `feedInput: 'f'`
-4. ✅ `src/components/talas/Primitives.js`
-   - `GhostButton` için `primary` tonu
-5. ✅ Freze/Torna entegrasyonu
-   - `pages/Milling.js`, `pages/Turning.js` içerisine `MachineCheckCard`
-6. ✅ Not
-   - `src/lib/calc.js` formülleri **değişmedi**
-
-#### Doğrulama / test sonucu
-- ✅ `testing_agent_v3`: `/app/test_reports/iteration_8.json`
-- ✅ Senaryolar + regresyonlar PASS
+Doğrulama
+- ✅ `testing_agent_v3`: `/app/test_reports/iteration_8.json` → PASS
 
 ---
 
 ### P0 KRİTİK — “MachineCheckCard tüm operasyonlarda” ✅ TAMAMLANDI (Rev-4)
-**Hedef:** Kullanıcının isteğiyle “Tezgâhtan geri kontrol” kartını kalan iki ekrana da eklemek: **Kılavuz/Diş** ve **Chatter-Free**.
+**Hedef:** Geri kontrol kartını tüm ana operasyon ekranlarına yaymak.
 
-#### Kullanıcı isteği
-- “A yap — hiçbir şeyi bozmadan” → kartın iki ekrana da eklenmesi.
-
-#### Uygulanan işler (kod karşılığı)
-1. ✅ `pages/Threading.js`
-   - `MachineCheckCard` eklendi.
-   - Kılavuz/Diş tornalama modlarında:
-     - `diameter = d.d`, `z = null` (fz kullanılmaz)
-     - `fRange = [pitch×0.98, pitch×1.02]` → tezgâhtaki F adım değilse uyarı.
-     - Apply: yalnızca `vc` (fz’ye dokunmaz)
-   - Diş frezeleme modunda:
-     - `diameter = toolD`, `z = d.z`
-     - Apply: `vc + fz` güncellenir
-2. ✅ `pages/ChatterFree.js`
-   - `MachineCheckCard` eklendi.
-   - `fzRange` tezgâh değerine göre: katalog `fz × RCTF`.
-   - Apply: tezgâh fz’si → katalog fz’sine çevirim: `fz_catalog = fz_machine / RCTF` (çift telafi önlenir).
-3. ✅ `src/components/talas/MachineCheckCard.js`
-   - Opsiyonel `fzHint` prop’u eklendi (fz’nin anlamlı olmadığı modlarda açıklama göstermek için).
-4. ✅ Not
-   - `src/lib/calc.js` formülleri **değişmedi**.
-
-#### Doğrulama / test sonucu
-- ✅ `testing_agent_v3`: `/app/test_reports/iteration_9.json`
-- ✅ 8/8 PASS, regresyon yok, inç modu sağlam
+Doğrulama
+- ✅ `testing_agent_v3`: `/app/test_reports/iteration_9.json` → PASS
 
 ---
 
-### P1 — Takım Kütüphanesi ile Otomatik Doldurma (Sıradaki, kullanıcı onayı bekleniyor)
-**Hedef:** Operasyon ekranlarında takım seçildiğinde çap/ağız sayısı/helis boyu vb. alanların otomatik gelmesi; giriş hatalarını azaltmak.
+### P0 — Mobile/Expo ikon + splash + app.json ✅ TAMAMLANDI (Rev-5)
+**Hedef:** Gelecekte Expo/React Native uygulaması oluşturulduğunda, ikon/splash/izinler hazır gelsin.
+
+Uygulanan işler (dosyalar)
+1. ✅ `/app/mobile-transfer/app.json`
+   - `expo.icon`, `expo.splash`, `android.adaptiveIcon`, `web.favicon`
+   - iOS/Android mikrofon izni (Chatter-Free için):
+     - iOS: `NSMicrophoneUsageDescription`, `UIBackgroundModes: ["audio"]`
+     - Android: `permissions: ["RECORD_AUDIO"]`
+2. ✅ `/app/mobile-transfer/generate_icons.py`
+   - PIL tabanlı üretim (harici araç/vektör bağımlılığı yok)
+   - Talaş renk tokenları: arkaplan `#111719`, amber `#F4B942`, teal `#55C6C3`
+   - Motif: CNC spindle-head + iş parçası (marka ikon diliyle uyumlu)
+3. ✅ Üretilen varlıklar: `/app/mobile-transfer/assets/`
+   - `icon.png` (1024×1024)
+   - `adaptive-icon.png` (1024×1024, şeffaf, Android safe-zone ölçekli)
+   - `splash.png` (1284×2778, “TALAŞ” wordmark + alt başlık)
+   - `favicon.png` (196×196)
+4. ✅ Dokümantasyon
+   - `/app/mobile-transfer/README.md` içine dosyalar eklendi
+
+Notlar
+- Web/PWA tarafındaki ikonlar **değiştirilmedi** (stabil sürüm korunuyor).
+
+---
+
+### P1 — Takım Kütüphanesi ile Otomatik Doldurma (sıradaki, kullanıcı onayı bekleniyor)
+**Hedef:** Operasyon ekranlarında takım seçildiğinde çap/ağız sayısı/helis boyu vb. alanların otomatik gelmesi.
 
 Önerilen adımlar:
 1. Takım veri modelini netleştir: `diameter`, `flutes(z)`, `fluteLength`, `toolType`, `notes`.
@@ -190,7 +158,7 @@ Not: Export/import, TR sayı formatı, uyarı/validasyon tutarlılığı vb. iyi
 ---
 
 ### P2 — Parça Programı / Toplam Çevrim Süresi (kullanıcı onayı bekleniyor)
-**Hedef:** Bir parça için operasyon zinciri (freze+matkap+torna+diş...) kurup toplam süre/maliyet çıkarmak.
+**Hedef:** Bir parça için operasyon zinciri kurup toplam süre/maliyet çıkarmak.
 
 Önerilen adımlar:
 1. Operasyonları “satır” olarak ekleyip sıralama.
@@ -201,10 +169,10 @@ Not: Export/import, TR sayı formatı, uyarı/validasyon tutarlılığı vb. iyi
 ---
 
 ### P3 — Tezgâh Profilleri (Opsiyonel ama önerilir)
-**Hedef:** Birden fazla tezgâhı olan kullanıcıların (farklı G94/G95 varsayılanı, max feed, max rpm, güç) tek dokunuşla geçiş yapması.
+**Hedef:** Birden fazla tezgâhı olan kullanıcıların tek dokunuşla geçiş yapması.
 
 Önerilen adımlar:
-1. Makine profili modeli: `label`, `maxRpm`, `maxFeed`, `powerKw`, `efficiency`, `feedModeByOp`, `maxFeedPerRev`, **matkap default z**, **varsayılan feedInput (f/fz)**.
+1. Makine profili modeli: `label`, `maxRpm`, `maxFeed`, `powerKw`, `efficiency`, `feedModeByOp`, `maxFeedPerRev`, matkap default `z`, varsayılan `feedInput (f/fz)`.
 2. Ayarlar’da “Makine profili seç” + “yeni profil oluştur”.
 3. Hesap ekranlarında aktif profile göre limit clamp ve uyarılar.
 
@@ -222,20 +190,20 @@ Not: Export/import, TR sayı formatı, uyarı/validasyon tutarlılığı vb. iyi
   - Tüm operasyonlarda F hem **G94 (mm/dk)** hem **G95 (mm/dev)** olarak görünür.
   - **Operasyon bazlı** varsayılan modlar doğru.
   - Tezgâha yazılacak F değeri ham biçimde verilir (G94’te **tam sayı, grup ayırıcısız**; G95’te **ondalık nokta**).
-  - G-code satırı doğru formatta üretilir (ondalık **nokta**).
-  - Limit aşımlarında kullanıcıya **kritik uyarı** gösterilir.
+  - G-code satırı doğru formatta üretilir.
 
 - ✅ **P0 KRİTİK başarı kriterleri (tamamlandı, Rev-3):**
   - Tezgâhtaki S/F değerleri uygulamada geri hesaplanabilir: Vc, f, fz, Vf net görünür.
-  - Matkapta **mm/diş (fz)** girişi ve **z (ağız sayısı)** ile f dönüşümü doğru çalışır.
-  - “Aynı devirde çapa göre Vc” görseli çap/efektif çap farkını açıklar.
-  - “Bu değerleri hesaba uygula” akışı hatasız çalışır.
+  - Matkapta **mm/diş (fz)** girişi ve **z** ile dönüşüm doğru çalışır.
 
 - ✅ **P0 KRİTİK başarı kriterleri (tamamlandı, Rev-4):**
   - “Tezgâhtan geri kontrol” kartı **5 ana operasyon ekranının tamamında** mevcuttur.
-  - Kılavuz/Diş modlarında diş adımı (pitch) ile **f = pitch** kuralı kullanıcıya görünür ve S/F üzerinden denetlenir.
   - Chatter-Free’de RCTF telafisi apply akışında ters çevrilir (çift telafi yok).
-  - Regresyon yok: önceki tüm operasyon ekranları ve kayıt/ayar akışları bozulmaz.
+
+- ✅ **P0 başarı kriterleri (tamamlandı, Rev-5):**
+  - `/app/mobile-transfer` içinde Expo için `app.json` ve gerekli varlıklar mevcut.
+  - `icon.png`, `adaptive-icon.png`, `splash.png`, `favicon.png` doğru referanslanır.
+  - Varlıklar **yeniden üretilebilir** (script ile) ve web/PWA’yı etkilemez.
 
 ---
 
@@ -253,18 +221,20 @@ Not: Export/import, TR sayı formatı, uyarı/validasyon tutarlılığı vb. iyi
 
 ### P0 KRİTİK: İlerleme (F) birim netliği ✅ TAMAMLANDI (Rev-2)
 - Yeni `FeedCard` + `feed.js` motoru
-- calc.js sonuçlarına `fn` eklendi (formül değişmedi)
-- Ayarlar’da **operasyon bazlı** G94/G95 seçimi + `maxFeedPerRev`
-- G94’te tezgâha uygun **tam sayı ham F** + G-kod satırı `G94 S... F...`
+- Ayarlar’da **operasyon bazlı** G94/G95 seçimi
 - Test: `testing_agent_v3` iteration_7 → PASS
 
 ### P0 KRİTİK: Tezgâhtan geri kontrol + matkap mm/diş ✅ TAMAMLANDI (Rev-3)
 - Yeni: `MachineCheckCard` (S/F → Vc, f, fz, Vf + çap karşılaştırması + apply)
-- Matkap: `z` (varsayılan 2) + `mm/dev ↔ mm/diş` giriş seçimi + `fz` sonuç satırı
+- Matkap: `z` (varsayılan 2) + `mm/dev ↔ mm/diş` giriş seçimi
 - Test: `testing_agent_v3` iteration_8 → PASS
 
 ### P0 KRİTİK: MachineCheckCard tüm operasyonlarda ✅ TAMAMLANDI (Rev-4)
 - Kılavuz/Diş (`pages/Threading.js`) ve Chatter-Free (`pages/ChatterFree.js`) entegrasyonu tamamlandı
-- `fzHint` desteği eklendi
-- Chatter-Free apply’da RCTF ters çevrimi (÷ RCTF) ile “çift telafi” önlendi
-- Test: `testing_agent_v3` iteration_9 → 8/8 PASS, regresyon yok
+- Test: `testing_agent_v3` iteration_9 → PASS
+
+### P0: Mobile/Expo ikon + splash + app.json ✅ TAMAMLANDI (Rev-5)
+- `/app/mobile-transfer/app.json` eklendi (icon/splash/adaptive icon + mikrofon izinleri)
+- `/app/mobile-transfer/assets/` üretildi (icon/adaptive-icon/splash/favicon)
+- `generate_icons.py` ile bağımsız yeniden üretim akışı eklendi
+- Web/PWA ikonları **değişmedi**; stabil sürüm korunuyor
