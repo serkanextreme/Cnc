@@ -3,14 +3,15 @@
 ## 1. Objectives
 - ZIP içindeki **7 ekranlık UI tasarımını 1:1 koruyarak** (renk tokenları, tipografi, ikon dili, mobil layout) çalışan bir mobil web uygulaması (PWA) yapmak.
 - **Offline-first**: İnternet olmadan çalışacak; materyal kütüphanesi, geçmiş, favoriler, ayarlar, makine profilleri cihazda saklanacak.
-- Freze/Torna/Matkap/Diş/Chatter-Free için canlı hesap: **n (RPM), Vf (feed), Vc doğrulama + Q/MRR, güç (kW), tork (Nm), çevrim süresi, Ra**.
+- Freze/Torna/Matkap/Diş/Chatter-Free için canlı hesap: **n (RPM), Vf/feed, Vc doğrulama + Q/MRR, güç (kW), tork (Nm), çevrim süresi, Ra**.
 - **Hazır malzeme kütüphanesi** + kullanıcı **kendi malzemesini ekle/düzenle/sil**.
 - **Birim sistemi seçimi**: Metrik (varsayılan) + Imperial (SFM/IPM/IPR) toggle.
 - **Makine limiti**: Varsayılan otomatik preset; checkbox açılırsa manuel limit girişi aktif.
-- ✅ **P0 KRİTİK (TAMAMLANDI): İlerleme (F) birim netliği**
+- ✅ **P0 KRİTİK (TAMAMLANDI, Rev-2): İlerleme (F) birim netliği + tezgâha uygun format**
   - Her operasyonda **G94 (mm/dk) ve G95 (mm/dev)** ilerleme değerleri **aynı anda** gösterilir.
-  - Varsayılan tezgâh F modu **G95 (mm/dev)**; Ayarlar’dan değiştirilebilir.
-  - Yanlış F girişi riskini azaltmak için **mm/dev tabanlı güvenlik uyarıları** + **kopyalanabilir G-kod satırı** eklenmiştir.
+  - Tezgâhın F okuma modu artık **operasyon başına** ayarlanır (Freze/Matkap/Chatter genelde G94, Torna/Diş genelde G95).
+  - “Tezgâha girilecek F” kartında **makineye yazılacak ham değer** gösterilir (örn. **F1188 / F407** gibi tam sayı mm/dk; G95’te **F0.320** gibi noktalı ondalık).
+  - Yanlış mod/yanlış değer riskini azaltmak için **mm/dev tabanlı güvenlik uyarıları** + **kopyalanabilir G-kod satırı**.
 
 ## 2. Implementation Steps
 
@@ -55,50 +56,57 @@ Not: Export/import, TR sayı formatı, uyarı/validasyon tutarlılığı vb. iyi
 
 ## 3. Next Actions
 
-### P0 KRİTİK — “İlerleme (F) Birim Netliği” ✅ TAMAMLANDI
-**Hedef:** Kullanıcının tezgâhta G94/G95 karışıklığı nedeniyle yanlış F girmesi kaynaklı kırık takım/matkap riskini azaltmak.
+### P0 KRİTİK — “İlerleme (F) Birim Netliği” ✅ TAMAMLANDI (Rev-2)
+**Hedef:** Tezgâhta G94/G95 karışıklığı ve frezede `0.160` gibi mm/dev değerinin **CNC tarafından okunmaması / yanlış anlaşılması** nedeniyle kırık takım riskini azaltmak; frezede **F1188 / F407** gibi **tam sayı mm/dk** kullanımını netleştirmek.
 
-**Kararlar (kullanıcı onaylı) – uygulandı:**
-- Varsayılan tezgâh F modu = **G95 (mm/dev)**.
-- Her sonuçta **G94 (mm/dk) ve G95 (mm/dev)** birlikte gösterilir.
-- Uyarı eşikleri:
-  - Malzeme kütüphanesindeki önerilen aralıktan türetilir
-  - Ayrıca Ayarlar’a **maksimum mm/dev (maxFeedPerRev)** limiti eklenmiştir
-- Hiçbir mevcut formül/değer değiştirilmedi; sadece **ek alan (fn)** + **ek UI**.
+#### Tespit / Kök neden
+- Hesaplar doğruydu; sorun **ana gösterim ve tezgâha uygun formatın** freze için yanlış modda (G95) öne çıkarılmasıydı.
+- Freze ekranında operatör beklentisi: **mm/dk (G94) tam sayı**.
 
-**Uygulanan işler (kod karşılığı):**
-1. ✅ `src/lib/feed.js` (yeni)
-   - `FEED_MODES`, `feedFromResult`, `gcodeLine` (**ondalık nokta**), `feedSafety`, `feedMetric`, `fzRangeToFnRange`
-2. ✅ `src/lib/calc.js`
-   - Tüm operasyon sonuçlarına **`fn = vf / n`** eklendi (formüller aynı; regresyon yok)
-3. ✅ `src/data/materials.js` / `DEFAULT_SETTINGS`
-   - `feedMode: 'G95'`
-   - `maxFeedPerRev: 2`
-4. ✅ `src/components/talas/ResultCard.js`
-   - `MetricCell` içine opsiyonel `sub` satırı eklendi (testId + `-sub`)
-5. ✅ `src/components/talas/FeedCard.js` (yeni)
-   - G94/G95 çift gösterim
-   - Kopyalanabilir G-kod satırı (G94/G95 + S + F)
-   - Ekran içi mod toggle
-   - Kritik durumda kırmızı banner: **“TEZGÂHA GİRMEDEN KONTROL ET”**
-   - Önerilen mm/dev aralığı görünümü
-6. ✅ Sayfa entegrasyonları
-   - `pages/Milling.js`, `Turning.js`, `Drilling.js`, `Threading.js` (3 alt mod), `ChatterFree.js`
-   - Sonuç kartında ana ilerleme değeri seçili tezgâh moduna göre; alt satırda diğer birim
-   - Sonuçların altına `FeedCard` eklendi
-7. ✅ `pages/Settings.js`
-   - Yeni bölüm: **TEZGÂH F MODU** (G94/G95)
-   - Yeni alan: **Maksimum ilerleme (mm/dev)**
-8. ✅ Geçmiş / Paylaşım
-   - Geçmiş satırında hem **G94 hem G95** rozetleri
-   - Paylaşım metninde hem G94 hem G95 + “F modunu kontrol et” uyarısı
-9. ✅ Senkron
-   - `mobile-transfer/lib` içine `calc.js` + `feed.js` senkronize edildi
+#### Kararlar (uygulandı)
+- İlerleme **iki değer birlikte** gösterilir:
+  - `G94` → **mm/dk (Vf)**
+  - `G95` → **mm/dev (fn)**
+- Tezgâh F modu artık **operasyon başına**:
+  - **Freze = G94**, **Matkap = G94**, **Chatter-free = G94**
+  - **Torna = G95**, **Kılavuz/Diş = G95**
+- “Tezgâha girilecek F” kartındaki değerler **makineye yazılacak ham formatta**:
+  - G94: **grup ayırıcısız**, metrikte **tam sayı** (örn. `1188`, `407`)
+  - G95: ondalık **NOKTA** ile (örn. `0.320`)
+- Ayarlar ekranındaki tek global toggle kaldırıldı; yerine **5 ayrı operasyon satırı** eklendi.
 
-**Doğrulama / test sonucu:**
-- ✅ `testing_agent_v3` raporu: `/app/test_reports/iteration_6.json`
-- ✅ 34/34 test PASS (konsol hatası yok)
-- ✅ Regresyon doğrulandı: Freze 3.714 / 1.188, Matkap 2.546 / 407, Torna 1.146 / 252 aynı
+#### Uygulanan işler (kod karşılığı)
+1. ✅ `src/lib/feed.js`
+   - Yeni: `FEED_MODE_OPS`, `resolveFeedMode(settings, op)`, `machineFeedText(...)` (ham F metni)
+   - Mevcut: `feedFromResult`, `gcodeLine` (ondalık nokta), `feedSafety`, `feedMetric`, `fzRangeToFnRange`
+2. ✅ `src/context/AppContext.js`
+   - Yeni settings anahtarı: `feedModeByOp`
+   - Yeni yardımcı: `setFeedModeForOp(op, mode)`
+3. ✅ `src/data/materials.js` (`DEFAULT_SETTINGS`)
+   - Güncellendi: `feedModeByOp` varsayılanları (Freze/Matkap/Chatter=G94, Torna/Diş=G95)
+   - `feedMode` legacy alanı korunur (geri uyumluluk)
+4. ✅ `src/components/talas/FeedCard.js`
+   - Ham değer gösterimi (`1188`, `407`, `0.320`)
+   - Aktif hücre metni: **“TEZGÂHA BUNU GİR”**
+   - Not: “Bu seçim yalnızca <ekran> için geçerlidir”
+5. ✅ Sayfa entegrasyonları
+   - `pages/Milling.js`, `Turning.js`, `Drilling.js`, `Threading.js`, `ChatterFree.js`
+   - `feedMode = resolveFeedMode(settings, '<op>')`
+   - Toggle → `setFeedModeForOp('<op>', v)`
+6. ✅ `pages/Settings.js`
+   - 5 ayrı satır: Freze/Matkap/Torna/Kılavuz-Diş/Chatter-free
+   - Eski tek toggle kaldırıldı
+7. ✅ Senkron
+   - `mobile-transfer/lib` içine `calc.js`, `feed.js`, `materials.js` senkronize edildi
+
+#### Doğrulama / test sonucu
+- ✅ `testing_agent_v3` raporu: `/app/test_reports/iteration_7.json`
+- ✅ 20/20 test PASS
+- ✅ Regresyon yok: n, Q, güç, tork, hm, Ra, geçmiş, yedekleme, inç modu sağlam
+- ✅ Örnekler:
+  - Freze varsayılan: `G94 S3714 F1188`
+  - Matkap varsayılan: `G94 S2546 F407`
+  - Torna varsayılan: `G95 S1146 F0.220`
 
 ---
 
@@ -125,6 +133,16 @@ Not: Export/import, TR sayı formatı, uyarı/validasyon tutarlılığı vb. iyi
 3. Toplam süre, toplam maliyet, takım ömrü tüketimi.
 4. Dışa aktarım (PDF/JSON) opsiyonu.
 
+---
+
+### P3 — Tezgâh Profilleri (Opsiyonel ama önerilir)
+**Hedef:** Birden fazla tezgâhı olan kullanıcıların (farklı G94/G95 varsayılanı, max feed, max rpm, güç) tek dokunuşla geçiş yapması.
+
+Önerilen adımlar:
+1. Makine profili modeli: `label`, `maxRpm`, `maxFeed`, `powerKw`, `efficiency`, `feedModeByOp`, `maxFeedPerRev`.
+2. Ayarlar’da “Makine profili seç” + “yeni profil oluştur”.
+3. Hesap ekranlarında aktif profile göre limit clamp ve uyarılar.
+
 ## 4. Success Criteria
 - Mockup sample calculations match within rounding: Freze 3714 RPM / 1188 mm/dk, Torna 1146 / 252, Matkap 2546 / 407 and ~4.4s.
 - Hazır malzeme kütüphanesi offline erişilebilir; custom material CRUD çalışır.
@@ -132,12 +150,15 @@ Not: Export/import, TR sayı formatı, uyarı/validasyon tutarlılığı vb. iyi
 - Machine limit works with default preset + checkbox enabling manual entry; clamp is clearly indicated.
 - Unit system toggle updates inputs/ranges/results/history correctly.
 - App is installable PWA and fully usable with **no internet** (no CDN).
-- ✅ **P0 KRİTİK başarı kriterleri (tamamlandı):**
+- ✅ **P0 KRİTİK başarı kriterleri (tamamlandı, Rev-2):**
   - Tüm operasyonlarda F hem **G94 (mm/dk)** hem **G95 (mm/dev)** olarak görünür.
-  - Varsayılan F modu **G95** ve Ayarlar’dan değiştirilebilir.
+  - **Operasyon bazlı** varsayılan modlar doğru:
+    - Freze/Matkap/Chatter = **G94** (mm/dk)
+    - Torna/Kılavuz-Diş = **G95** (mm/dev)
+  - Tezgâha yazılacak F değeri ham biçimde verilir (G94’te **tam sayı, grup ayırıcısız**; G95’te **ondalık nokta**).
   - G-code satırı doğru formatta üretilir (ondalık **nokta**).
-  - `fn = vf/n` hesaplaması tüm operasyonlarda doğru ve güvenli (n=0 guard).
-  - mm/dev limit aşımlarında kullanıcıya **kritik uyarı** gösterilir.
+  - `fn = vf/n` tüm operasyonlarda doğru ve güvenli (n=0 guard).
+  - Limit aşımlarında kullanıcıya **kritik uyarı** gösterilir.
 
 ---
 
@@ -153,9 +174,10 @@ Not: Export/import, TR sayı formatı, uyarı/validasyon tutarlılığı vb. iyi
 ### Phase 3–6 (genişletmeler) ✅
 - Diş/kılavuz, takım ömrü & maliyet, chatter-free/HEM, trokoidal, mobil hazırlık
 
-### P0 KRİTİK: İlerleme (F) birim netliği ✅ TAMAMLANDI
+### P0 KRİTİK: İlerleme (F) birim netliği ✅ TAMAMLANDI (Rev-2)
 - Yeni `FeedCard` + `feed.js` motoru
 - calc.js sonuçlarına `fn` eklendi (formül değişmedi)
-- Ayarlar’a G94/G95 + max mm/dev eklendi
+- Ayarlar’da **operasyon bazlı** G94/G95 seçimi + `maxFeedPerRev`
+- G94’te tezgâha uygun **tam sayı ham F** (örn. `1188`, `407`) + G-kod satırı `G94 S... F...`
 - Geçmiş/paylaşım çift birim
-- Test: `testing_agent_v3` 34/34 PASS
+- Test: `testing_agent_v3` iteration_7 → 20/20 PASS

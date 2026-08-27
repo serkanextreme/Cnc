@@ -24,7 +24,7 @@ import {
   Stepper,
 } from '../components/talas/Primitives';
 import { adjustForHardness, calcDrilling, evaluateRange, worstStatus } from '../lib/calc';
-import { feedFromResult, feedMetric, feedSafety, normalizeFeedMode } from '../lib/feed';
+import { feedFromResult, feedMetric, feedSafety, resolveFeedMode } from '../lib/feed';
 import { COOLANT_OPTIONS, coolantLabel, midOf, recommended, resolveLimits, TOOL_MATERIALS } from '../data/materials';
 import { buildShareText, shareText } from '../lib/records';
 import { formatNumber, formatQty, formatRange, formatSeconds, unitLabel } from '../lib/units';
@@ -34,7 +34,7 @@ export default function Drilling() {
   const [params] = useSearchParams();
   const {
     activeMaterial, setActiveMaterialId, drafts, updateDraft, resetDraft,
-    settings, unitSystem, saveCalculation, history, updateSettings,
+    settings, unitSystem, saveCalculation, history, setFeedModeForOp,
   } = useApp();
   const [pickerOpen, setPickerOpen] = useState(false);
   const d = drafts.matkap;
@@ -79,7 +79,7 @@ export default function Drilling() {
   const fEval = rec ? evaluateRange(d.f, rec.f) : { status: 'neutral', label: '—' };
   const deepHole = d.depth > d.d * 3;
   const powerOver = !!(result && limits && limits.powerKw && result.power > limits.powerKw);
-  const feedMode = normalizeFeedMode(settings.feedMode);
+  const feedMode = resolveFeedMode(settings, 'matkap');
   const feed = feedFromResult(result);
   const fnRange = rec ? rec.f : null;
   const feedCheck = feedSafety({
@@ -324,8 +324,9 @@ export default function Drilling() {
           vf={feed.vf}
           fn={feed.fn}
           mode={feedMode}
+          scopeLabel="Matkap ekranı"
           onModeChange={(v) => {
-            updateSettings({ feedMode: v });
+            setFeedModeForOp('matkap', v);
             toast.success(v === 'G95' ? 'Tezgâh F modu: mm/dev (G95)' : 'Tezgâh F modu: mm/dk (G94)');
           }}
           unitSystem={unitSystem}

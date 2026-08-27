@@ -29,7 +29,7 @@ import {
   evaluateRange,
   threadingPassCount,
 } from '../lib/calc';
-import { feedFromResult, feedMetric, feedSafety, normalizeFeedMode } from '../lib/feed';
+import { feedFromResult, feedMetric, feedSafety, resolveFeedMode } from '../lib/feed';
 import { midOf, recommended, resolveLimits, TOOL_MATERIALS } from '../data/materials';
 import {
   DIS_MODES,
@@ -49,7 +49,7 @@ export default function Threading() {
   const [params] = useSearchParams();
   const {
     activeMaterial, setActiveMaterialId, drafts, updateDraft, resetDraft,
-    settings, unitSystem, saveCalculation, history, updateSettings,
+    settings, unitSystem, saveCalculation, history, setFeedModeForOp,
   } = useApp();
   const [pickerOpen, setPickerOpen] = useState(false);
   const d = drafts.dis;
@@ -116,7 +116,7 @@ export default function Threading() {
   }, [d, activeMaterial, settings.efficiency, limits, hasErrors, selectedThread]);
 
   const vcEval = vcRange ? evaluateRange(d.vc, vcRange) : { status: 'neutral', label: '—' };
-  const feedMode = normalizeFeedMode(settings.feedMode);
+  const feedMode = resolveFeedMode(settings, 'dis');
   const feed = feedFromResult(result);
   // Kılavuz ve torna dişinde devir başına ilerleme DAİMA diş adımına eşit olmalıdır.
   const fnRange = d.mode === 'frezeleme' || !(d.pitch > 0)
@@ -557,8 +557,9 @@ export default function Threading() {
           vf={feed.vf}
           fn={feed.fn}
           mode={feedMode}
+          scopeLabel="Kılavuz / Diş ekranı"
           onModeChange={(v) => {
-            updateSettings({ feedMode: v });
+            setFeedModeForOp('dis', v);
             toast.success(v === 'G95' ? 'Tezgâh F modu: mm/dev (G95)' : 'Tezgâh F modu: mm/dk (G94)');
           }}
           unitSystem={unitSystem}

@@ -19,10 +19,27 @@ export const FEED_MODES = [
   { id: 'G94', label: 'mm/dk (G94)', short: 'G94', kind: 'vf', note: 'Dakikadaki ilerleme' },
 ];
 
-export const DEFAULT_FEED_MODE = 'G95';
+export const DEFAULT_FEED_MODE = 'G94';
 
 export function normalizeFeedMode(mode) {
   return mode === 'G94' ? 'G94' : 'G95';
+}
+
+/** Operasyona göre tezgâh F modu (freze/matkap → mm/dk, torna/diş → mm/dev varsayılan). */
+export const FEED_MODE_OPS = [
+  { id: 'freze', label: 'Freze', fallback: 'G94' },
+  { id: 'matkap', label: 'Matkap', fallback: 'G94' },
+  { id: 'torna', label: 'Torna', fallback: 'G95' },
+  { id: 'dis', label: 'Kılavuz / Diş', fallback: 'G95' },
+  { id: 'chatter', label: 'Chatter-free', fallback: 'G94' },
+];
+
+export function resolveFeedMode(settings, op) {
+  const byOp = (settings && settings.feedModeByOp) || {};
+  if (byOp[op]) return normalizeFeedMode(byOp[op]);
+  const entry = FEED_MODE_OPS.find((o) => o.id === op);
+  if (entry) return entry.fallback;
+  return normalizeFeedMode(settings && settings.feedMode);
 }
 
 export function feedModeInfo(mode) {
@@ -40,6 +57,17 @@ export function feedFromResult(result, overrideVf = null) {
     fn = n > 0 && Number.isFinite(vf) ? vf / n : NaN;
   }
   return { vf, fn, n };
+}
+
+/** Tezgâha yazılacak ham F metni — grup ayırıcısı YOK, ondalık nokta (F1188 / F0.160). */
+export function machineFeedText({ mode, vf, fn, unitSystem = 'metric' }) {
+  const imperial = unitSystem === 'imperial';
+  if (normalizeFeedMode(mode) === 'G94') {
+    const v = toDisplay('vf', vf, unitSystem);
+    return Number.isFinite(v) ? v.toFixed(imperial ? 2 : 0) : '—';
+  }
+  const v = toDisplay('f', fn, unitSystem);
+  return Number.isFinite(v) ? v.toFixed(imperial ? 4 : 3) : '—';
 }
 
 /** Tezgâha yazılacak G-kod satırı — ondalık ayırıcı DAİMA nokta. */

@@ -16,6 +16,7 @@ export function AppProvider({ children }) {
     ...readJSON(KEYS.settings, {}),
     manual: { ...DEFAULT_SETTINGS.manual, ...(readJSON(KEYS.settings, {}).manual || {}) },
     presetByOp: { ...DEFAULT_SETTINGS.presetByOp, ...(readJSON(KEYS.settings, {}).presetByOp || {}) },
+    feedModeByOp: { ...DEFAULT_SETTINGS.feedModeByOp, ...(readJSON(KEYS.settings, {}).feedModeByOp || {}) },
   }));
   const [history, setHistory] = useState(() => readJSON(KEYS.history, []));
   const [favorites, setFavorites] = useState(() => readJSON(KEYS.favorites, DEFAULT_FAVORITES));
@@ -78,6 +79,15 @@ export function AppProvider({ children }) {
 
   const setPresetForOp = useCallback((op, presetId) => {
     setSettings((prev) => ({ ...prev, presetByOp: { ...prev.presetByOp, [op]: presetId } }));
+  }, []);
+
+  /** Operasyon bazlı tezgâh F modu (G94 mm/dk | G95 mm/dev) */
+  const setFeedModeForOp = useCallback((op, mode) => {
+    setSettings((prev) => ({
+      ...prev,
+      feedMode: mode,
+      feedModeByOp: { ...(prev.feedModeByOp || {}), [op]: mode === 'G94' ? 'G94' : 'G95' },
+    }));
   }, []);
 
   /* ------------------------------------------------------------ favoriler */
@@ -168,6 +178,7 @@ export function AppProvider({ children }) {
         ...payload.settings,
         manual: { ...DEFAULT_SETTINGS.manual, ...(payload.settings.manual || {}) },
         presetByOp: { ...DEFAULT_SETTINGS.presetByOp, ...(payload.settings.presetByOp || {}) },
+        feedModeByOp: { ...DEFAULT_SETTINGS.feedModeByOp, ...(payload.settings.feedModeByOp || {}) },
       });
     }
     if (Array.isArray(payload.history)) setHistory(payload.history);
@@ -192,6 +203,7 @@ export function AppProvider({ children }) {
       updateSettings,
       updateManualLimit,
       setPresetForOp,
+      setFeedModeForOp,
       unitSystem: settings.unitSystem,
       history,
       saveCalculation,
@@ -218,7 +230,7 @@ export function AppProvider({ children }) {
       replaceAll,
     }),
     [
-      settings, updateSettings, updateManualLimit, setPresetForOp, history, saveCalculation,
+      settings, updateSettings, updateManualLimit, setPresetForOp, setFeedModeForOp, history, saveCalculation,
       deleteHistory, clearHistory, favorites, toggleFavorite, materials, materialById,
       customMaterials, saveCustomMaterial, deleteCustomMaterial, activeMaterial,
       activeMaterialId, drafts, updateDraft, resetDraft, replaceAll,

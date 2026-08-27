@@ -24,7 +24,7 @@ import {
   Stepper,
 } from '../components/talas/Primitives';
 import { adjustForHardness, calcMilling, evaluateRange, worstStatus } from '../lib/calc';
-import { feedFromResult, feedMetric, feedSafety, fzRangeToFnRange, normalizeFeedMode } from '../lib/feed';
+import { feedFromResult, feedMetric, feedSafety, fzRangeToFnRange, resolveFeedMode } from '../lib/feed';
 import { midOf, recommended, resolveLimits, TOOL_MATERIALS } from '../data/materials';
 import { buildShareText, shareText } from '../lib/records';
 import { formatNumber, formatQty, formatRange, unitLabel } from '../lib/units';
@@ -34,7 +34,7 @@ export default function Milling() {
   const [params] = useSearchParams();
   const {
     activeMaterial, setActiveMaterialId, drafts, updateDraft, resetDraft,
-    settings, unitSystem, saveCalculation, history, materialById, updateSettings,
+    settings, unitSystem, saveCalculation, history, materialById, setFeedModeForOp,
   } = useApp();
   const [pickerOpen, setPickerOpen] = useState(false);
   const d = drafts.freze;
@@ -82,7 +82,7 @@ export default function Milling() {
   const vcEval = rec ? evaluateRange(d.vc, rec.vc) : { status: 'neutral', label: '—' };
   const fzEval = rec ? evaluateRange(d.fz, rec.fz) : { status: 'neutral', label: '—' };
   const powerOver = !!(result && limits && limits.powerKw && result.power > limits.powerKw);
-  const feedMode = normalizeFeedMode(settings.feedMode);
+  const feedMode = resolveFeedMode(settings, 'freze');
   const feed = feedFromResult(result);
   const fnRange = rec ? fzRangeToFnRange(rec.fz, d.z) : null;
   const feedCheck = feedSafety({
@@ -333,8 +333,9 @@ export default function Milling() {
           vf={feed.vf}
           fn={feed.fn}
           mode={feedMode}
+          scopeLabel="Freze ekranı"
           onModeChange={(v) => {
-            updateSettings({ feedMode: v });
+            setFeedModeForOp('freze', v);
             toast.success(v === 'G95' ? 'Tezgâh F modu: mm/dev (G95)' : 'Tezgâh F modu: mm/dk (G94)');
           }}
           unitSystem={unitSystem}

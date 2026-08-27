@@ -164,7 +164,9 @@ export const DEFAULT_SETTINGS = {
   manual: { maxRpm: 12000, maxFeed: 15000, powerKw: 11 },
   efficiency: 0.8,
   // tezgâh F modu: G95 = mm/dev (devir başına), G94 = mm/dk (dakikada)
-  feedMode: 'G95',
+  // Her operasyon için ayrı: freze/matkap tezgâhları genelde mm/dk, torna mm/dev okur.
+  feedMode: 'G94',
+  feedModeByOp: { freze: 'G94', torna: 'G95', matkap: 'G94', dis: 'G95', chatter: 'G94' },
   maxFeedPerRev: 2,
   // takım ömrü & maliyet
   refLife: 15,

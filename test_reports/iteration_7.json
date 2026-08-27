@@ -1,0 +1,53 @@
+{
+  "summary": "Completed comprehensive frontend testing of feed rate fix implementation. All 5 operations (Freze, Matkap, Torna, Kılavuz/Diş, Chatter-free) now have independent per-operation feed modes with correct defaults. Settings page shows 5 separate toggles. Feed values display correctly with no thousand separators and decimal points in G-code. Critical warnings, G-code copy, and all regression items verified.",
+  
+  "backend_issues": {
+    "critical_bugs": [],
+    "flaky_endpoints": []
+  },
+  
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  
+  "passed_tests": [
+    "Default modes: Freze=G94 (mm/dk), Matkap=G94 (mm/dk), Torna=G95 (mm/dev), Kılavuz/Diş=G95 (mm/dev), Chatter-free=G94 (mm/dk)",
+    "Feed values: Freze shows 1188 (no thousand separator), Matkap shows 407, Torna shows 0,220, Diş shows 1,000",
+    "G-code format: Freze 'G94 S3714 F1188', Matkap 'G94 S2546 F407', Torna 'G95 S1146 F0.220', Diş 'G95 S424 F1.000'",
+    "Settings page: 5 feed mode rows with correct testIds (settings-feed-mode-freze/matkap/torna/dis/chatter)",
+    "Settings chips: Correct default badges showing 'mm/dk · G94' for freze/matkap/chatter and 'mm/dev · G95' for torna/dis",
+    "Independence: Changing Freze to G95 in Settings doesn't affect Matkap (stays G94)",
+    "Independence: Changing Torna to G94 via FeedCard toggle doesn't affect Freze",
+    "localStorage persistence: Feed mode selections persist after page reload (verified in localStorage: feedModeByOp object present)",
+    "Critical warning: Entering 1,3 in Matkap input-f triggers red banner and 'KONTROL ET!' chip",
+    "Critical warning clear: Changing back to 0,16 removes warning and shows 'Güvenli aralık'",
+    "G-code copy: Button works without console errors (shows toast)",
+    "Regression: RPM values unchanged (Freze=3714, Matkap=2546, Torna=1146)",
+    "Regression: All calculated values (Q, power, torque, hm, Ra) display correctly",
+    "Regression: Material selector, hardness card, recommendation panel 'Tümünü uygula' work",
+    "Regression: Save and Share buttons present and functional",
+    "Regression: Settings unit system toggle (Metric/Inch) works",
+    "Regression: Export/Import data buttons present",
+    "Inch mode: Switching to Inch shows IPM units, G-code uses decimal point (F46.79), app doesn't crash",
+    "Feed value format: G94 values show as integers (1188, 407), G95 values show 3 decimals (0.320, 0.220, 1.000)",
+    "Active cell highlighting: Correct mode cell highlighted in FeedCard (G94 or G95 based on operation)"
+  ],
+  
+  "test_report_links": [
+    "/app/test_reports/iteration_7.json"
+  ],
+  
+  "action_item_for_main_agent": "",
+  
+  "updated_files": [],
+  
+  "success_percentage": {
+    "frontend": "100% (20/20 test scenarios passed)",
+    "backend": "N/A (frontend-only testing as requested)"
+  },
+  
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_test_itself": false
+}

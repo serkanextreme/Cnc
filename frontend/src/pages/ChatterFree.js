@@ -16,7 +16,7 @@ import {
   PrimaryButton, ScreenHeader, ScreenShell, SectionHeading, SegmentedToggle, StatusChip, Stepper,
 } from '../components/talas/Primitives';
 import { adjustForHardness, calcChatterFree, calcTrochoidalSlot, evaluateRange, HEM_AE_PRESETS } from '../lib/calc';
-import { feedFromResult, feedMetric, feedSafety, fzRangeToFnRange, normalizeFeedMode } from '../lib/feed';
+import { feedFromResult, feedMetric, feedSafety, fzRangeToFnRange, resolveFeedMode } from '../lib/feed';
 import { ChatterListener } from '../components/talas/ChatterListener';
 import { midOf, recommended, resolveLimits, TOOL_MATERIALS } from '../data/materials';
 import { buildShareText, shareText } from '../lib/records';
@@ -27,7 +27,7 @@ export default function ChatterFree() {
   const [params] = useSearchParams();
   const {
     activeMaterial, setActiveMaterialId, drafts, updateDraft, resetDraft,
-    settings, unitSystem, saveCalculation, history, updateSettings,
+    settings, unitSystem, saveCalculation, history, setFeedModeForOp,
   } = useApp();
   const [pickerOpen, setPickerOpen] = useState(false);
   const d = drafts.chatter;
@@ -84,7 +84,7 @@ export default function ChatterFree() {
   const vcEval = rec ? evaluateRange(d.vc, rec.vc) : { status: 'neutral', label: '—' };
   const fzEval = rec ? evaluateRange(d.fz, rec.fz) : { status: 'neutral', label: '—' };
   const hasWarn = !!(result && result.warnings.length);
-  const feedMode = normalizeFeedMode(settings.feedMode);
+  const feedMode = resolveFeedMode(settings, 'chatter');
   const feed = feedFromResult(result);
   const fnRange = rec && result
     ? fzRangeToFnRange([rec.fz[0] * result.rctf, rec.fz[1] * result.rctf], d.z)
@@ -308,8 +308,9 @@ export default function ChatterFree() {
           vf={feed.vf}
           fn={feed.fn}
           mode={feedMode}
+          scopeLabel="Chatter-free ekranı"
           onModeChange={(v) => {
-            updateSettings({ feedMode: v });
+            setFeedModeForOp('chatter', v);
             toast.success(v === 'G95' ? 'Tezgâh F modu: mm/dev (G95)' : 'Tezgâh F modu: mm/dk (G94)');
           }}
           unitSystem={unitSystem}

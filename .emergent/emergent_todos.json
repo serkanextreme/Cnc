@@ -1,42 +1,30 @@
 [
   {
-    "content": "lib/feed.js oluştur (FEED_MODES, feedFromResult, gcodeLine, feedSafety, feedMetric)",
+    "content": "Ana değer modunu OPERASYON BAŞINA yap: Freze/Matkap/Chatter = G94 mm/dk, Torna/Diş = G95 mm/dev",
     "status": "completed"
   },
   {
-    "content": "lib/calc.js: tüm sonuçlara fn = vf/n ekle (mevcut alanlar korunur)",
+    "content": "feed.js: resolveFeedMode(settings, op) + machineFeedText (tam sayı, grup ayrıcısız, ondalık nokta)",
     "status": "completed"
   },
   {
-    "content": "DEFAULT_SETTINGS: feedMode='G95', maxFeedPerRev=2",
+    "content": "AppContext + DEFAULT_SETTINGS: feedModeByOp ve setFeedModeForOp",
     "status": "completed"
   },
   {
-    "content": "ResultCard MetricCell'e `sub` satırı desteği ekle",
+    "content": "FeedCard: makineye yazılacak ham değer gösterimi + 'bu ayar sadece bu ekran için' notu",
     "status": "completed"
   },
   {
-    "content": "FeedCard.js: G94/G95 çift gösterim + G-kod kopyala + kritik uyarı",
+    "content": "5 sayfayı (Freze/Torna/Matkap/Diş/Chatter) operasyon bazlı moda bağla",
     "status": "completed"
   },
   {
-    "content": "Milling/Turning/Drilling/Threading/ChatterFree sayfalarına entegre et",
+    "content": "Ayarlar: her operasyon için ayrı F modu seçimi",
     "status": "completed"
   },
   {
-    "content": "Settings.js: Tezgâh F modu + maksimum mm/dev alanı",
-    "status": "completed"
-  },
-  {
-    "content": "Geçmiş/paylaşım metinlerine G94+G95 çift bilgi ekle",
-    "status": "completed"
-  },
-  {
-    "content": "esbuild + screenshot doğrulama",
-    "status": "completed"
-  },
-  {
-    "content": "testing_agent_v3 frontend doğrulaması (34/34 PASS, hata yok)",
+    "content": "Doğrulama: esbuild + ekran görüntüsü + testing agent (20/20 PASS)",
     "status": "completed"
   }
 ]

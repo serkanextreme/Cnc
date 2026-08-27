@@ -23,7 +23,7 @@ import {
   SegmentedToggle,
 } from '../components/talas/Primitives';
 import { adjustForHardness, calcTurning, evaluateRange, worstStatus } from '../lib/calc';
-import { feedFromResult, feedMetric, feedSafety, normalizeFeedMode } from '../lib/feed';
+import { feedFromResult, feedMetric, feedSafety, resolveFeedMode } from '../lib/feed';
 import { midOf, recommended, resolveLimits } from '../data/materials';
 import { buildShareText, shareText } from '../lib/records';
 import { formatNumber, formatQty, formatRange, unitLabel } from '../lib/units';
@@ -42,7 +42,7 @@ export default function Turning() {
   const [params] = useSearchParams();
   const {
     activeMaterial, setActiveMaterialId, drafts, updateDraft, resetDraft,
-    settings, unitSystem, saveCalculation, history, updateSettings,
+    settings, unitSystem, saveCalculation, history, setFeedModeForOp,
   } = useApp();
   const [pickerOpen, setPickerOpen] = useState(false);
   const d = drafts.torna;
@@ -88,7 +88,7 @@ export default function Turning() {
   const fEval = rec ? evaluateRange(d.f, rec.f) : { status: 'neutral', label: '—' };
   const raOver = !!(result && d.targetRa > 0 && result.ra - d.targetRa > 0.005);
   const powerOver = !!(result && limits && limits.powerKw && result.power > limits.powerKw);
-  const feedMode = normalizeFeedMode(settings.feedMode);
+  const feedMode = resolveFeedMode(settings, 'torna');
   const feed = feedFromResult(result);
   const fnRange = rec ? rec.f : null;
   const feedCheck = feedSafety({
@@ -337,8 +337,9 @@ export default function Turning() {
           vf={feed.vf}
           fn={feed.fn}
           mode={feedMode}
+          scopeLabel="Torna ekranı"
           onModeChange={(v) => {
-            updateSettings({ feedMode: v });
+            setFeedModeForOp('torna', v);
             toast.success(v === 'G95' ? 'Tezgâh F modu: mm/dev (G95)' : 'Tezgâh F modu: mm/dk (G94)');
           }}
           unitSystem={unitSystem}

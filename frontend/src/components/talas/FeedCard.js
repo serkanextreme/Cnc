@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Check, ClipboardCopy, ShieldCheck, TriangleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { Eyebrow, SectionHeading, SegmentedToggle, StatusChip } from './Primitives';
-import { FEED_MODES, feedModeInfo, gcodeLine, normalizeFeedMode } from '../../lib/feed';
+import { FEED_MODES, feedModeInfo, gcodeLine, machineFeedText, normalizeFeedMode } from '../../lib/feed';
 import { formatQty, unitLabel } from '../../lib/units';
 
 const FRAME = {
@@ -42,7 +42,7 @@ function FeedValueCell({ active, modeId, value, unit, hint, testId }) {
           {info.short}
         </span>
         {active ? (
-          <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-primary">TEZGÂH MODU</span>
+          <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-primary">TEZGÂHA BUNU GİR</span>
         ) : (
           <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Karşılığı</span>
         )}
@@ -74,6 +74,7 @@ export function FeedCard({
   unitSystem = 'metric',
   safety = { level: 'neutral', messages: [] },
   fnRange = null,
+  scopeLabel = null,
   title = 'Tezgâha girilecek F',
   eyebrow = 'İLERLEME · BİRİM KONTROLÜ',
   extraNote = null,
@@ -108,8 +109,8 @@ export function FeedCard({
     }
   };
 
-  const vfText = Number.isFinite(vf) ? formatQty('vf', vf, unitSystem) : '—';
-  const fnText = Number.isFinite(fn) ? formatQty('f', fn, unitSystem, { decimals: unitSystem === 'imperial' ? 4 : 3 }) : '—';
+  const vfText = machineFeedText({ mode: 'G94', vf, fn, unitSystem });
+  const fnText = machineFeedText({ mode: 'G95', vf, fn, unitSystem });
 
   return (
     <section aria-label={title} data-testid={testId}>
@@ -157,7 +158,7 @@ export function FeedCard({
             modeId="G94"
             value={vfText}
             unit={unitLabel('vf', unitSystem)}
-            hint="Dakikada ilerleme (Vf)"
+            hint="Dakikada ilerleme (Vf) · tam sayı"
             testId="feed-value-g94"
           />
           <FeedValueCell
@@ -189,7 +190,7 @@ export function FeedCard({
         </div>
 
         <div className="border-b border-border px-4 py-3">
-          <Eyebrow className="mb-2">Tezgâh F modu</Eyebrow>
+          <Eyebrow className="mb-2">{scopeLabel ? `Tezgâh F modu · ${scopeLabel}` : 'Tezgâh F modu'}</Eyebrow>
           <SegmentedToggle
             options={FEED_MODES.map((m) => ({ id: m.id, label: m.label }))}
             value={activeMode}
@@ -198,8 +199,13 @@ export function FeedCard({
             testId="feed-mode-toggle"
           />
           <p className="mt-2 text-[11px] leading-4 text-muted-foreground">
-            Tezgâhın kumandası G95 modundaysa F alanına <strong className="text-card-foreground">mm/dev</strong>, G94
-            modundaysa <strong className="text-card-foreground">mm/dk</strong> yazılır. Yanlış mod = kırık takım.
+            {scopeLabel ? (
+              <>
+                Bu seçim <strong className="text-card-foreground">yalnızca {scopeLabel}</strong> için geçerlidir.{' '}
+              </>
+            ) : null}
+            Tezgâhın kumandası G94 modundaysa F alanına <strong className="text-card-foreground">mm/dk (tam sayı)</strong>,
+            G95 modundaysa <strong className="text-card-foreground">mm/dev</strong> yazılır.
           </p>
         </div>
 
