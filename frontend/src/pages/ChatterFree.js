@@ -11,6 +11,7 @@ import { HardnessCard } from '../components/talas/HardnessCard';
 import { ToolLifeCard } from '../components/talas/ToolLifeCard';
 import { FormulaPanel, ResultCard } from '../components/talas/ResultCard';
 import { FeedCard } from '../components/talas/FeedCard';
+import { MachineCheckCard } from '../components/talas/MachineCheckCard';
 import {
   BottomActionBar, ClampNotice, Eyebrow, GhostButton, IconButton, NumericField,
   PrimaryButton, ScreenHeader, ScreenShell, SectionHeading, SegmentedToggle, StatusChip, Stepper,
@@ -317,6 +318,26 @@ export default function ChatterFree() {
           safety={feedCheck}
           fnRange={fnRange}
           extraNote="HEM/chatter-free'de fn, RCTF telafili fz × z değerinden gelir. Yüksek mm/dk değeri normaldir; tezgâh G95 modundaysa mm/dev karşılığını gir."
+        />
+
+        <MachineCheckCard
+          diameter={d.d}
+          z={d.z}
+          feedMode={feedMode}
+          unitSystem={unitSystem}
+          vcRange={rec ? rec.vc : null}
+          fRange={fnRange}
+          fzRange={rec && result ? [rec.fz[0] * result.rctf, rec.fz[1] * result.rctf] : null}
+          suggestS={result ? result.n : NaN}
+          suggestF={result ? result.vf : NaN}
+          onApply={({ vc, fz }) => {
+            const rctf = result && result.rctf > 0 ? result.rctf : 1;
+            updateDraft('chatter', {
+              vc: Number(vc.toFixed(1)),
+              ...(Number.isFinite(fz) && fz > 0 ? { fz: Number((fz / rctf).toFixed(3)) } : {}),
+            });
+          }}
+          note={`HEM'de tezgâhta koşan diş başına ilerleme, RCTF (${result ? formatNumber(result.rctf, 3) : '—'}×) ile telafi edilmiş değerdir. "Hesaba uygula" dediğinde katalog fz'ye çevrilir (÷ RCTF).`}
         />
 
         {result ? (

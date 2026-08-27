@@ -39,6 +39,7 @@ export function MachineCheckCard({
   vcRange = null,
   fRange = null,
   fzRange = null,
+  fzHint = 'Ağız sayısı girilmedi',
   suggestS = NaN,
   suggestF = NaN,
   onApply = null,
@@ -144,7 +145,7 @@ export function MachineCheckCard({
             label={z > 0 ? `Diş başına (fz) · ${z} ağız` : 'Diş başına (fz)'}
             value={Number.isFinite(fz) ? formatQty('fz', fz, unitSystem, { decimals: 3 }) : '—'}
             unit={unitLabel('fz', unitSystem)}
-            note={z > 0 ? `fz = f / ${z}` : 'Ağız sayısı girilmedi'}
+            note={z > 0 ? `fz = f / ${z}` : fzHint}
             tone="primary"
             chip={chipFor(fzEval, `${testId}-fz-chip`)}
             testId={`${testId}-fz`}

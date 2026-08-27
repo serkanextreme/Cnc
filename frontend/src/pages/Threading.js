@@ -8,6 +8,7 @@ import { MachineLimitCard } from '../components/talas/MachineLimitCard';
 import { ToolLifeCard } from '../components/talas/ToolLifeCard';
 import { FormulaPanel, ResultCard } from '../components/talas/ResultCard';
 import { FeedCard } from '../components/talas/FeedCard';
+import { MachineCheckCard } from '../components/talas/MachineCheckCard';
 import {
   BottomActionBar,
   Eyebrow,
@@ -569,6 +570,27 @@ export default function Threading() {
             d.mode === 'frezeleme'
               ? 'Diş frezesinde merkez ilerlemesi helis telafisiyle hesaplanır.'
               : 'Diş açmada devir başına ilerleme DAİMA diş adımına eşittir (G95 F = adım). G94 modunda F = adım × devir.'
+          }
+        />
+
+        <MachineCheckCard
+          diameter={d.mode === 'frezeleme' ? d.toolD : d.d}
+          z={d.mode === 'frezeleme' ? d.z : null}
+          feedMode={feedMode}
+          unitSystem={unitSystem}
+          vcRange={vcRange}
+          fRange={fnRange}
+          fzHint={d.mode === 'frezeleme' ? 'Ağız sayısı girilmedi' : 'Kılavuz/diş tornalamada diş başına ilerleme kullanılmaz'}
+          suggestS={result ? result.n : NaN}
+          suggestF={result ? result.vf : NaN}
+          onApply={({ vc, fz }) => updateDraft('dis', {
+            vc: Number(vc.toFixed(1)),
+            ...(d.mode === 'frezeleme' && Number.isFinite(fz) && fz > 0 ? { fz: Number(fz.toFixed(3)) } : {}),
+          })}
+          note={
+            d.mode === 'frezeleme'
+              ? 'Diş frezesinde çap olarak TAKIM çapı kullanılır; devir bu çaptan hesaplanır.'
+              : `Kılavuz ve diş tornalamada devir başına ilerleme DAİMA diş adımına eşit olmalıdır: f = ${formatQty('length', d.pitch, unitSystem)} ${unitLabel('f', unitSystem)}. "Devir başına (f)" kutusunda bundan farklı bir değer görüyorsan diş adımı bozulur — tezgâhtaki F'yi kontrol et.`
           }
         />
 

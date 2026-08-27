@@ -1,0 +1,42 @@
+{
+  "summary": "Completed comprehensive testing of MachineCheckCard integration on Threading (/dis) and ChatterFree (/chatter-free) pages. All 8 test scenarios passed successfully with no regressions.",
+  
+  "backend_issues": {
+    "critical_bugs": [],
+    "flaky_endpoints": []
+  },
+  
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  
+  "passed_tests": [
+    "✅ /dis tap mode (kılavuz): S=424, F=1 → Vc=8.0 m/dk, fn=1.000 mm/dev, fz='—', Vf=424 mm/dk (all values correct)",
+    "✅ /dis pitch validation: F=0.8 shows 'Önerilenin altında' warning, F=1.2 shows 'Önerilenin üstünde' warning",
+    "✅ /dis thread milling mode: MachineCheckCard renders without crash, uses toolD (4mm) for Vc calculation (5.3 m/dk), fz calculated as fn/z (0.333), apply button updates both vc and fz inputs",
+    "✅ /dis thread turning mode: MachineCheckCard renders correctly, fz shows '—' (correct), apply button updates only vc (not fz)",
+    "✅ /chatter-free default values: MachineCheckCard present with correct prefilled values (Vc=168.0 m/dk, fn=0.533 mm/dev, fz=0.133 mm/diş, Vf=2.377 mm/dk)",
+    "✅ /chatter-free apply button: Reverse calculates catalog fz (0.133 ÷ RCTF 1.667 → 0.080), result-vf recalculates correctly without exploding, toast notification shown",
+    "✅ Regression test: All 5 pages (freze, torna, matkap, dis, chatter-free) load correctly with MachineCheckCard present and no console errors",
+    "✅ Inch mode: Both /dis and /chatter-free pages work correctly in inch mode without crashing, MachineCheckCard visible and functional"
+  ],
+  
+  "test_report_links": [
+    "/app/test_reports/iteration_9.json",
+    "Screenshots: .screenshots/dis-tap-s424-f1.png, dis-milling-applied.png, dis-turning-applied.png, chatter-defaults.png, chatter-applied.png, dis-inch-mode.png, chatter-inch-mode.png"
+  ],
+  
+  "action_item_for_main_agent": "",
+  
+  "updated_files": [],
+  
+  "success_percentage": {
+    "frontend": "100% (8/8 test scenarios passed)",
+    "backend": "N/A (frontend-only testing as requested)"
+  },
+  
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_test_itself": false
+}
