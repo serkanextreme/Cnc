@@ -10,6 +10,7 @@ import { ToolLifeCard } from '../components/talas/ToolLifeCard';
 import { RecommendPanel } from '../components/talas/Recommend';
 import { FormulaPanel, ResultCard } from '../components/talas/ResultCard';
 import { FeedCard } from '../components/talas/FeedCard';
+import { MachineCheckCard } from '../components/talas/MachineCheckCard';
 import {
   BottomActionBar,
   Eyebrow,
@@ -342,6 +343,23 @@ export default function Milling() {
           safety={feedCheck}
           fnRange={fnRange}
           extraNote={`Frezede fn = fz × z = ${formatQty('fz', d.fz, unitSystem)} × ${d.z} ağız. Tezgâh G94 modundaysa mm/dk, G95 modundaysa mm/dev değerini gir.`}
+        />
+
+        <MachineCheckCard
+          diameter={d.d}
+          z={d.z}
+          feedMode={feedMode}
+          unitSystem={unitSystem}
+          vcRange={rec ? rec.vc : null}
+          fRange={fnRange}
+          fzRange={rec ? rec.fz : null}
+          suggestS={result ? result.n : NaN}
+          suggestF={result ? result.vf : NaN}
+          onApply={({ vc, fz }) => updateDraft('freze', {
+            vc: Number(vc.toFixed(1)),
+            ...(Number.isFinite(fz) && fz > 0 ? { fz: Number(fz.toFixed(3)) } : {}),
+          })}
+          note={`Örnek: Ø${formatQty('length', d.d, unitSystem)} takım, S 2500 dev/dk → Vc = π × Ø × S / 1000. F 360 mm/dk → f = 360 / 2500 = 0,144 mm/dev → fz = f / ${d.z} ağız.`}
         />
 
         {rec ? (

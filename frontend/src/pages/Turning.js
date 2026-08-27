@@ -10,6 +10,7 @@ import { ToolLifeCard } from '../components/talas/ToolLifeCard';
 import { RecommendPanel } from '../components/talas/Recommend';
 import { FormulaPanel, ResultCard } from '../components/talas/ResultCard';
 import { FeedCard } from '../components/talas/FeedCard';
+import { MachineCheckCard } from '../components/talas/MachineCheckCard';
 import {
   BottomActionBar,
   Eyebrow,
@@ -346,6 +347,19 @@ export default function Turning() {
           safety={feedCheck}
           fnRange={fnRange}
           extraNote="Tornada kumanda genelde G95 (mm/dev) modundadır. Katalog ilerlemesi f zaten mm/dev cinsindendir."
+        />
+
+        <MachineCheckCard
+          diameter={d.d}
+          z={null}
+          feedMode={feedMode}
+          unitSystem={unitSystem}
+          vcRange={rec ? rec.vc : null}
+          fRange={rec ? rec.f : null}
+          suggestS={result ? result.n : NaN}
+          suggestF={result ? result.vf : NaN}
+          onApply={({ vc, fn }) => updateDraft('torna', { vc: Number(vc.toFixed(1)), f: Number(fn.toFixed(3)) })}
+          note="Tornada tek kesici uç olduğu için diş başına ilerleme yoktur; f = mm/dev doğrudan kullanılır."
         />
 
         {result && result.feedForTargetRa ? (

@@ -10,6 +10,7 @@ import { ToolLifeCard } from '../components/talas/ToolLifeCard';
 import { RecommendPanel } from '../components/talas/Recommend';
 import { FormulaPanel, ResultCard } from '../components/talas/ResultCard';
 import { FeedCard } from '../components/talas/FeedCard';
+import { MachineCheckCard } from '../components/talas/MachineCheckCard';
 import {
   BottomActionBar,
   Eyebrow,
@@ -56,6 +57,10 @@ export default function Drilling() {
 
   const rec = recommended(material, 'matkap', d.tool);
   const limits = resolveLimits('matkap', settings);
+  const z = d.z > 0 ? d.z : 2;                        // matkap ağız (dudak) sayısı — standart 2
+  const fzValue = d.f > 0 ? d.f / z : 0;              // diş başına ilerleme (mm/diş)
+  const fzRange = rec ? [rec.f[0] / z, rec.f[1] / z] : null;
+  const feedInput = d.feedInput === 'fz' ? 'fz' : 'f';
 
   const errors = useMemo(() => {
     const e = {};
@@ -179,6 +184,15 @@ export default function Drilling() {
               error={errors.d}
               testId="input-d"
             />
+            <Stepper
+              label="Ağız (dudak) sayısı"
+              hint={z === 2 ? 'Standart helis matkap = 2 ağız' : `${z} ağız · f = fz × ${z}`}
+              value={z}
+              min={1}
+              max={4}
+              onChange={(v) => updateDraft('matkap', { z: v })}
+              testId="stepper-z"
+            />
             <div className="px-4 py-3">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
@@ -225,18 +239,50 @@ export default function Drilling() {
               error={errors.vc}
               testId="input-vc"
             />
-            <NumericField
-              id="matkap-f"
-              label="İlerleme"
-              hint={rec ? `Önerilen: ${formatRange('f', rec.f, unitSystem)} ${unitLabel('f', unitSystem)}` : ''}
-              hintTone={fEval.status === 'ok' ? 'muted' : 'warn'}
-              kind="f"
-              value={d.f}
-              onChange={(v) => updateDraft('matkap', { f: v })}
-              status={errors.f ? 'error' : fEval.status}
-              error={errors.f}
-              testId="input-f"
-            />
+            <div className="px-4 py-3">
+              <Eyebrow className="mb-2">İlerleme nasıl girilecek?</Eyebrow>
+              <SegmentedToggle
+                options={[
+                  { id: 'f', label: 'mm/dev (f)' },
+                  { id: 'fz', label: 'mm/diş (fz)' },
+                ]}
+                value={feedInput}
+                onChange={(v) => updateDraft('matkap', { feedInput: v })}
+                ariaLabel="İlerleme giriş birimi"
+                testId="feed-input-toggle"
+              />
+              <p className="mt-2 text-[11px] leading-4 text-muted-foreground">
+                Katalog/tablo <strong className="text-card-foreground">diş başına (mm/diş)</strong> veriyorsa onu seçin —
+                uygulama {z} ağızla çarpıp devir başına ilerlemeyi bulur: f = fz × {z}.
+              </p>
+            </div>
+            {feedInput === 'fz' ? (
+              <NumericField
+                id="matkap-fz"
+                label="Diş başına ilerleme (fz)"
+                hint={fzRange ? `Önerilen: ${formatRange('fz', fzRange, unitSystem)} ${unitLabel('fz', unitSystem)} → f = ${formatRange('f', rec.f, unitSystem)} ${unitLabel('f', unitSystem)}` : ''}
+                hintTone={fEval.status === 'ok' ? 'muted' : 'warn'}
+                kind="fz"
+                value={fzValue}
+                onChange={(v) => updateDraft('matkap', { f: v * z })}
+                status={errors.f ? 'error' : fEval.status}
+                error={errors.f}
+                testId="input-fz"
+              />
+            ) : (
+              <NumericField
+                id="matkap-f"
+                label="İlerleme (devir başına)"
+                hint={rec ? `Önerilen: ${formatRange('f', rec.f, unitSystem)} ${unitLabel('f', unitSystem)} (= ${formatRange('fz', fzRange, unitSystem)} ${unitLabel('fz', unitSystem)})` : ''}
+                hintTone={fEval.status === 'ok' ? 'muted' : 'warn'}
+                kind="f"
+                value={d.f}
+                onChange={(v) => updateDraft('matkap', { f: v })}
+                status={errors.f ? 'error' : fEval.status}
+                error={errors.f}
+                testId="input-f"
+              />
+            )}
             <NumericField
               id="matkap-depth"
               label="Delik derinliği"
@@ -316,6 +362,14 @@ export default function Drilling() {
               tone: 'foreground',
               testId: 'result-torque',
             },
+            {
+              label: 'Diş başına ilerleme (fz)',
+              note: `fz = f / ${z} ağız`,
+              value: result ? formatQty('fz', fzValue, unitSystem) : '—',
+              unit: unitLabel('fz', unitSystem),
+              tone: 'accent',
+              testId: 'result-fz',
+            },
           ]}
         />
 
@@ -332,7 +386,21 @@ export default function Drilling() {
           unitSystem={unitSystem}
           safety={feedCheck}
           fnRange={fnRange}
-          extraNote="Matkapta katalog ilerlemesi (f) mm/dev cinsindendir. Tezgâh G94 modundaysa mm/dk değerini, G95 modundaysa mm/dev değerini gir."
+          extraNote={`Matkapta f = fz × ${z} ağız. Katalog mm/diş veriyorsa yukarıdaki "mm/diş (fz)" girişini kullanın.`}
+        />
+
+        <MachineCheckCard
+          diameter={d.d}
+          z={z}
+          feedMode={feedMode}
+          unitSystem={unitSystem}
+          vcRange={rec ? rec.vc : null}
+          fRange={rec ? rec.f : null}
+          fzRange={fzRange}
+          suggestS={result ? result.n : NaN}
+          suggestF={result ? result.vf : NaN}
+          onApply={({ vc, fn }) => updateDraft('matkap', { vc: Number(vc.toFixed(1)), f: Number(fn.toFixed(3)) })}
+          note={`Örnek: Ø10 matkap, S 2500 dev/dk → Vc = π × 10 × 2500 / 1000 = 78,5 m/dk. F 360 mm/dk → f = 0,144 mm/dev → fz = 0,072 mm/diş (2 ağız).`}
         />
 
         <section

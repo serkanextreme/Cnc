@@ -435,6 +435,7 @@ export function PrimaryButton({ icon: Icon, children, onClick, testId, disabled,
 export function GhostButton({ icon: Icon, children, onClick, testId, tone = 'default', className = '' }) {
   const tones = {
     default: 'border-border bg-card text-card-foreground',
+    primary: 'border-primary bg-primary/15 text-primary',
     destructive: 'border-destructive/50 bg-destructive/10 text-destructive',
   };
   return (

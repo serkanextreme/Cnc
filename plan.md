@@ -7,11 +7,20 @@
 - **Hazır malzeme kütüphanesi** + kullanıcı **kendi malzemesini ekle/düzenle/sil**.
 - **Birim sistemi seçimi**: Metrik (varsayılan) + Imperial (SFM/IPM/IPR) toggle.
 - **Makine limiti**: Varsayılan otomatik preset; checkbox açılırsa manuel limit girişi aktif.
+
 - ✅ **P0 KRİTİK (TAMAMLANDI, Rev-2): İlerleme (F) birim netliği + tezgâha uygun format**
   - Her operasyonda **G94 (mm/dk) ve G95 (mm/dev)** ilerleme değerleri **aynı anda** gösterilir.
   - Tezgâhın F okuma modu artık **operasyon başına** ayarlanır (Freze/Matkap/Chatter genelde G94, Torna/Diş genelde G95).
   - “Tezgâha girilecek F” kartında **makineye yazılacak ham değer** gösterilir (örn. **F1188 / F407** gibi tam sayı mm/dk; G95’te **F0.320** gibi noktalı ondalık).
   - Yanlış mod/yanlış değer riskini azaltmak için **mm/dev tabanlı güvenlik uyarıları** + **kopyalanabilir G-kod satırı**.
+
+- ✅ **P0 KRİTİK (TAMAMLANDI, Rev-3): Tezgâh S/F geri kontrol + matkapta mm/diş desteği (katalog uyumu)**
+  - **Tezgâhtan geri kontrol**: Tezgâhta görülen **S (devir)** ve **F** girilerek bunların gerçek karşılığı olan **Vc (SMM), f (mm/dev), fz (mm/diş), Vf** hesaplanır.
+  - **Matkapta diş başına ilerleme**: Matkapta kataloglar/tablolar sıkça **mm/diş (feed per tooth)** verdiği için **fz girişi** desteklenir.
+  - **Ağız (dudak) sayısı**: Matkapta varsayılan **z=2**; böylece **f(mm/dev) = fz × z** netleşir.
+  - **Vc farkı açıklaması**: Ø10 @ 2500 dev/dk için Vc = 78,5 m/dk; kullanıcıda görülen 55,2 m/dk ≈ Ø7 efektif çap karşılığı olabilir. Bu, formül hatası değil **çap/efektif çap farkı**dır.
+
+---
 
 ## 2. Implementation Steps
 
@@ -103,10 +112,59 @@ Not: Export/import, TR sayı formatı, uyarı/validasyon tutarlılığı vb. iyi
 - ✅ `testing_agent_v3` raporu: `/app/test_reports/iteration_7.json`
 - ✅ 20/20 test PASS
 - ✅ Regresyon yok: n, Q, güç, tork, hm, Ra, geçmiş, yedekleme, inç modu sağlam
-- ✅ Örnekler:
-  - Freze varsayılan: `G94 S3714 F1188`
-  - Matkap varsayılan: `G94 S2546 F407`
-  - Torna varsayılan: `G95 S1146 F0.220`
+
+---
+
+### P0 KRİTİK — “Tezgâhtan Geri Kontrol + Matkap mm/diş” ✅ TAMAMLANDI (Rev-3)
+**Hedef:** Kullanıcının sahadaki gerçek tezgâh değerleri (S/F) ile uygulamanın girişleri arasında **birim/yorum farkını** anında yakalamak; özellikle matkapta **katalogların mm/diş (feed per tooth)** verdiği durumlarda hatalı yarım ilerlemeyi engellemek.
+
+#### Kullanıcı bildirimi (olay)
+- “Ø10 matkap, S2500 F360 → SMM 55.2 ve feed per tooth 0.08 olmalı; uygulama farklı gösteriyor.”
+
+#### Kök neden
+1) **İlerleme birimi uyuşmazlığı**
+- Kullanıcının kaynağı **mm/diş** veriyor; matkapta tipik **z=2** olduğu için:
+  - Doğru ilişki: **f (mm/dev) = fz (mm/diş) × z**
+  - Örnek: fz=0,08 → f=0,16 → (Vc80/Ø10) → **Vf≈407 mm/dk**
+
+2) **Vc (SMM) farkı**
+- Fizik: **Vc = π × D × n / 1000**
+- Ø10 ve 2500 dev/dk → **78,5 m/dk**
+- 55,2 m/dk, aynı devirde yaklaşık **Ø7 efektif çap**a karşılık gelir (Ø7 @ 2500 → ≈55,0 m/dk)
+
+#### Kararlar (uygulandı)
+- “Tezgâhtan geri kontrol” kartı her ekrana eklenir: S/F → Vc, f, fz, Vf.
+- Matkapta **z (ağız sayısı)** ve **mm/dev ↔ mm/diş** giriş seçimi eklenir.
+- Kullanıcıya çap etkisini göstermek için “Aynı devirde çapa göre Vc” karşılaştırması eklenir.
+
+#### Uygulanan işler (kod karşılığı)
+1. ✅ Yeni bileşen: `src/components/talas/MachineCheckCard.js`
+   - Girdi: S ve F
+   - Çıktı: `Vc (SMM)`, `f (mm/dev)`, `fz (mm/diş)`, `Vf (mm/dk)`
+   - Ek: Önerilen aralıklara göre rozetler, “Aynı devirde çapa göre Vc” (0.7D/D/1.3D), “Bu değerleri hesaba uygula” butonu
+2. ✅ `pages/Drilling.js`
+   - Matkap için `z` stepper (varsayılan 2)
+   - `feedInput` seçimi: `f` (mm/dev) veya `fz` (mm/diş)
+   - Sonuç kartına `fz` satırı eklendi
+   - `MachineCheckCard` eklendi
+3. ✅ `src/data/materials.js`
+   - `DEFAULT_DRAFTS.matkap`: `z: 2`, `feedInput: 'f'`
+4. ✅ `src/components/talas/Primitives.js`
+   - `GhostButton` bileşenine `primary` tonu eklendi (MachineCheckCard apply butonu için)
+5. ✅ Freze ve Torna sayfaları
+   - `pages/Milling.js` ve `pages/Turning.js` içerisine `MachineCheckCard` eklendi
+6. ✅ Not
+   - `src/lib/calc.js` formülleri **değişmedi**
+7. ✅ Senkron
+   - `mobile-transfer/lib` içine `calc.js`, `feed.js`, `materials.js` senkronize edildi
+
+#### Doğrulama / test sonucu
+- ✅ `testing_agent_v3` raporu: `/app/test_reports/iteration_8.json`
+- ✅ 15/15 senaryo + regresyonlar PASS
+- ✅ Doğrulanan örnek:
+  - Ø10, S2500, F360 → Vc=78,5 m/dk; f=0,144 mm/dev; fz=0,072 mm/diş
+  - Aynı devirde Ø7 → Vc≈55,0 m/dk (kullanıcının 55,2 değerine yakın)
+  - Matkapta fz=0,08 gir → f=0,16 → (Vc80/Ø10) → **Vf=407 mm/dk** ve `G94 S2546 F407`
 
 ---
 
@@ -117,7 +175,7 @@ Not: Export/import, TR sayı formatı, uyarı/validasyon tutarlılığı vb. iyi
 1. Takım veri modelini netleştir: `diameter`, `flutes(z)`, `fluteLength`, `toolType`, `notes`.
 2. Operasyonlara “Takım seç” akışı:
    - Freze/Chatter-Free: Ø, z, helis boyu otomatik
-   - Matkap: Ø otomatik
+   - Matkap: Ø, **z (dudak sayısı)** otomatik
    - Diş frezesi: takım Ø, z otomatik
 3. Seçilen takımın değerlerini draft’lara patch’le.
 4. Geçmiş kaydı ve paylaşım metninde takım bilgisini göster.
@@ -139,9 +197,11 @@ Not: Export/import, TR sayı formatı, uyarı/validasyon tutarlılığı vb. iyi
 **Hedef:** Birden fazla tezgâhı olan kullanıcıların (farklı G94/G95 varsayılanı, max feed, max rpm, güç) tek dokunuşla geçiş yapması.
 
 Önerilen adımlar:
-1. Makine profili modeli: `label`, `maxRpm`, `maxFeed`, `powerKw`, `efficiency`, `feedModeByOp`, `maxFeedPerRev`.
+1. Makine profili modeli: `label`, `maxRpm`, `maxFeed`, `powerKw`, `efficiency`, `feedModeByOp`, `maxFeedPerRev`, **matkap default z**, **varsayılan feedInput (f/fz)**.
 2. Ayarlar’da “Makine profili seç” + “yeni profil oluştur”.
 3. Hesap ekranlarında aktif profile göre limit clamp ve uyarılar.
+
+---
 
 ## 4. Success Criteria
 - Mockup sample calculations match within rounding: Freze 3714 RPM / 1188 mm/dk, Torna 1146 / 252, Matkap 2546 / 407 and ~4.4s.
@@ -150,6 +210,7 @@ Not: Export/import, TR sayı formatı, uyarı/validasyon tutarlılığı vb. iyi
 - Machine limit works with default preset + checkbox enabling manual entry; clamp is clearly indicated.
 - Unit system toggle updates inputs/ranges/results/history correctly.
 - App is installable PWA and fully usable with **no internet** (no CDN).
+
 - ✅ **P0 KRİTİK başarı kriterleri (tamamlandı, Rev-2):**
   - Tüm operasyonlarda F hem **G94 (mm/dk)** hem **G95 (mm/dev)** olarak görünür.
   - **Operasyon bazlı** varsayılan modlar doğru:
@@ -159,6 +220,13 @@ Not: Export/import, TR sayı formatı, uyarı/validasyon tutarlılığı vb. iyi
   - G-code satırı doğru formatta üretilir (ondalık **nokta**).
   - `fn = vf/n` tüm operasyonlarda doğru ve güvenli (n=0 guard).
   - Limit aşımlarında kullanıcıya **kritik uyarı** gösterilir.
+
+- ✅ **P0 KRİTİK başarı kriterleri (tamamlandı, Rev-3):**
+  - Tezgâhtaki S/F değerleri uygulamada geri hesaplanabilir: Vc, f, fz, Vf net görünür.
+  - Matkapta **mm/diş (fz)** girişi ve **z (ağız sayısı)** ile f dönüşümü doğru çalışır.
+  - “Aynı devirde çapa göre Vc” görseli kullanıcıya çap/efektif çap farkını açıklar.
+  - “Bu değerleri hesaba uygula” akışı hatasız çalışır (toast + giriş alanlarına aktarım).
+  - Regresyon yok: önceki tüm operasyon ekranları ve kayıt/ayar akışları bozulmaz.
 
 ---
 
@@ -181,3 +249,11 @@ Not: Export/import, TR sayı formatı, uyarı/validasyon tutarlılığı vb. iyi
 - G94’te tezgâha uygun **tam sayı ham F** (örn. `1188`, `407`) + G-kod satırı `G94 S... F...`
 - Geçmiş/paylaşım çift birim
 - Test: `testing_agent_v3` iteration_7 → 20/20 PASS
+
+### P0 KRİTİK: Tezgâhtan geri kontrol + matkap mm/diş ✅ TAMAMLANDI (Rev-3)
+- Yeni: `MachineCheckCard` (S/F → Vc, f, fz, Vf + çap karşılaştırması + apply)
+- Matkap: `z` (varsayılan 2) + `mm/dev ↔ mm/diş` giriş seçimi + `fz` sonuç satırı
+- `GhostButton` primary tonu
+- `calc.js` formülleri değişmedi
+- Senkron: `mobile-transfer/lib` güncellendi
+- Test: `testing_agent_v3` iteration_8 → tüm senaryolar PASS

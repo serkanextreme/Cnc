@@ -1,30 +1,26 @@
 [
   {
-    "content": "Ana değer modunu OPERASYON BAŞINA yap: Freze/Matkap/Chatter = G94 mm/dk, Torna/Diş = G95 mm/dev",
+    "content": "MachineCheckCard: tezgâhtaki S ve F girilince Vc(SMM), f(mm/dev), fz(mm/diş), Vf göster + hesaba uygula",
     "status": "completed"
   },
   {
-    "content": "feed.js: resolveFeedMode(settings, op) + machineFeedText (tam sayı, grup ayrıcısız, ondalık nokta)",
+    "content": "Matkaba ağız sayısı z (varsayılan 2) ekle; ilerlemeyi mm/dev ↔ mm/diş olarak girilebilir yap",
     "status": "completed"
   },
   {
-    "content": "AppContext + DEFAULT_SETTINGS: feedModeByOp ve setFeedModeForOp",
+    "content": "Matkap sonuçlarına fz (mm/diş) satırı + öneri hint'ine çift birim",
     "status": "completed"
   },
   {
-    "content": "FeedCard: makineye yazılacak ham değer gösterimi + 'bu ayar sadece bu ekran için' notu",
+    "content": "Freze ve Torna ekranlarına da geri kontrol kartını ekle",
     "status": "completed"
   },
   {
-    "content": "5 sayfayı (Freze/Torna/Matkap/Diş/Chatter) operasyon bazlı moda bağla",
+    "content": "Önerilen Vc için devir aralığı, önerilen f için F aralığı ve çapa göre Vc karşılaştırması",
     "status": "completed"
   },
   {
-    "content": "Ayarlar: her operasyon için ayrı F modu seçimi",
-    "status": "completed"
-  },
-  {
-    "content": "Doğrulama: esbuild + ekran görüntüsü + testing agent (20/20 PASS)",
+    "content": "testing_agent_v3 doğrulaması (iteration_8: tüm senaryolar PASS, hata yok)",
     "status": "completed"
   }
 ]

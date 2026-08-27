@@ -128,7 +128,7 @@ export function emptyCustomMaterial() {
 export const DEFAULT_DRAFTS = {
   freze: { tool: 'karbur', d: 12, z: 4, cornerR: 0.8, vc: 140, fz: 0.08, ap: 2, ae: 6, hardnessOverride: 0 },
   torna: { tool: 'karbur', d: 50, direction: 'od', noseR: 0.8, vc: 180, f: 0.22, ap: 1.5, targetRa: 1.6, hardnessOverride: 0 },
-  matkap: { tool: 'karbur', d: 10, coolant: 'sivi', vc: 80, f: 0.16, depth: 30, peck: 0, hardnessOverride: 0 },
+  matkap: { tool: 'karbur', d: 10, z: 2, coolant: 'sivi', vc: 80, f: 0.16, depth: 30, peck: 0, feedInput: 'f', hardnessOverride: 0 },
   dis: {
     mode: 'kilavuz',
     tool: 'hss',
